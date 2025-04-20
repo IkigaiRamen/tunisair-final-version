@@ -1,0 +1,53 @@
+.meeting-form-container {
+  padding: 1.5rem;
+
+  .form-grid {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: 1.5rem;
+  }
+
+  .field {
+    margin-bottom: 1rem;
+
+    label {
+      margin-bottom: 0.5rem;
+      font-weight: 500;
+      color: var(--text-color);
+    }
+
+    small {
+      display: block;
+      margin-top: 0.25rem;
+    }
+  }
+
+  ::ng-deep {
+    .p-calendar {
+      width: 100%;
+    }
+
+    .p-dropdown {
+      width: 100%;
+    }
+
+    .p-multiselect {
+      width: 100%;
+    }
+
+    .p-inputtext {
+      width: 100%;
+    }
+  }
+}
+
+// Responsive styles
+@media screen and (max-width: 768px) {
+  .meeting-form-container {
+    padding: 1rem;
+
+    .form-grid {
+      gap: 1rem;
+    }
+  }
+} 

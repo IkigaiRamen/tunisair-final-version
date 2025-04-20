@@ -1,0 +1,59 @@
+<div class="timeline-container">
+  <p-timeline [value]="events" [align]="'alternate'">
+    <ng-template pTemplate="content" let-event>
+      <div class="timeline-event" [ngStyle]="{'border-left-color': event.color}">
+        <div class="event-header">
+          <i [class]="event.icon" [ngStyle]="{'color': event.color}"></i>
+          <span class="event-date">{{ event.date | date:'medium' }}</span>
+        </div>
+        <div class="event-content">
+          <h4>{{ event.title }}</h4>
+          <p>{{ event.description }}</p>
+          <div class="event-details">
+            <ng-container [ngSwitch]="event.type">
+              <!-- Task Details -->
+              <div *ngSwitchCase="'task'" class="task-details">
+                <span class="detail-item">
+                  <i class="pi pi-user"></i>
+                  {{ event.data.assignee.username }}
+                </span>
+                <span class="detail-item">
+                  <i class="pi pi-calendar"></i>
+                  Due: {{ event.data.dueDate | date }}
+                </span>
+                <span class="detail-item">
+                  <i class="pi pi-flag"></i>
+                  {{ event.data.priority }}
+                </span>
+              </div>
+
+              <!-- Meeting Details -->
+              <div *ngSwitchCase="'meeting'" class="meeting-details">
+                <span class="detail-item">
+                  <i class="pi pi-users"></i>
+                  {{ event.data.participants.length }} participants
+                </span>
+                <span class="detail-item">
+                  <i class="pi pi-map-marker"></i>
+                  {{ event.data.location }}
+                </span>
+              </div>
+
+              <!-- Document Details -->
+              <div *ngSwitchCase="'document'" class="document-details">
+                <span class="detail-item">
+                  <i class="pi pi-user"></i>
+                  {{ event.data.uploadedBy.username }}
+                </span>
+                <span class="detail-item">
+                  <i class="pi pi-file"></i>
+                  {{ event.data.fileType }}
+                </span>
+              </div>
+            </ng-container>
+          </div>
+        </div>
+      </div>
+    </ng-template>
+  </p-timeline>
+</div> 

@@ -1,0 +1,95 @@
+<div class="task-dashboard-container">
+  <div class="card">
+    <div class="card-header">
+      <h2>Task Dashboard</h2>
+      <div class="filter-section">
+        <div class="field">
+          <label for="statusFilter">Status</label>
+          <p-dropdown id="statusFilter" [options]="Object.values(TaskStatus)" 
+            [(ngModel)]="selectedStatus" (onChange)="onFilterChange()" 
+            [showClear]="true" placeholder="Filter by status">
+          </p-dropdown>
+        </div>
+
+        <div class="field">
+          <label for="priorityFilter">Priority</label>
+          <p-dropdown id="priorityFilter" [options]="Object.values(TaskPriority)" 
+            [(ngModel)]="selectedPriority" (onChange)="onFilterChange()" 
+            [showClear]="true" placeholder="Filter by priority">
+          </p-dropdown>
+        </div>
+
+        <div class="field">
+          <label for="assigneeFilter">Assignee</label>
+          <p-dropdown id="assigneeFilter" [options]="users" 
+            [(ngModel)]="selectedAssignee" (onChange)="onFilterChange()" 
+            [showClear]="true" optionLabel="username" optionValue="id" 
+            placeholder="Filter by assignee">
+          </p-dropdown>
+        </div>
+
+        <div class="field">
+          <label for="dateRange">Date Range</label>
+          <p-calendar id="dateRange" [(ngModel)]="dateRange" selectionMode="range" 
+            (onSelect)="onFilterChange()" [showIcon]="true" 
+            placeholder="Select date range">
+          </p-calendar>
+        </div>
+      </div>
+    </div>
+
+    <div class="card-content">
+      <div *ngIf="loading" class="loading-container">
+        <p-progressSpinner></p-progressSpinner>
+        <p>Loading tasks...</p>
+      </div>
+
+      <div *ngIf="!loading" class="task-timeline">
+        <p-timeline [value]="tasks" [align]="'alternate'">
+          <ng-template pTemplate="content" let-task>
+            <div class="task-card">
+              <div class="task-header">
+                <h3>{{ task.title }}</h3>
+                <div class="task-actions">
+                  <p-button icon="pi pi-pencil" styleClass="p-button-text" 
+                    (onClick)="editTask(task)" tooltip="Edit Task">
+                  </p-button>
+                  <p-button icon="pi pi-trash" styleClass="p-button-text p-button-danger" 
+                    (onClick)="deleteTask(task)" tooltip="Delete Task">
+                  </p-button>
+                </div>
+              </div>
+
+              <div class="task-content">
+                <p>{{ task.description }}</p>
+                <div class="task-meta">
+                  <div class="meta-item">
+                    <i class="pi pi-user"></i>
+                    <span>Assignee: {{ task.assignee.username }}</span>
+                  </div>
+                  <div class="meta-item">
+                    <i class="pi pi-calendar"></i>
+                    <span>Due: {{ task.dueDate | date }}</span>
+                  </div>
+                  <div class="meta-item">
+                    <i class="pi pi-flag"></i>
+                    <span>Priority: {{ task.priority }}</span>
+                  </div>
+                </div>
+
+                <div class="task-status">
+                  <p-dropdown [options]="Object.values(TaskStatus)" 
+                    [(ngModel)]="task.status" (onChange)="updateTaskStatus(task, $event)" 
+                    [style]="{'width': '150px'}">
+                  </p-dropdown>
+                </div>
+              </div>
+            </div>
+          </ng-template>
+        </p-timeline>
+      </div>
+    </div>
+  </div>
+</div>
+
+<p-toast></p-toast> 

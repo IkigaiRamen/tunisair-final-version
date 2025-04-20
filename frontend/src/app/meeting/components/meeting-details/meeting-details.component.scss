@@ -1,0 +1,102 @@
+.meeting-details-container {
+  padding: 1.5rem;
+
+  .card {
+    background: var(--surface-card);
+    border-radius: var(--border-radius);
+    box-shadow: var(--card-shadow);
+  }
+
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--surface-border);
+
+    h2 {
+      margin: 0;
+      color: var(--text-color);
+    }
+
+    .action-buttons {
+      display: flex;
+      gap: 0.5rem;
+    }
+  }
+
+  .card-content {
+    padding: 1.5rem;
+  }
+
+  .loading-container,
+  .error-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    text-align: center;
+
+    p {
+      margin-top: 1rem;
+      color: var(--text-color-secondary);
+    }
+  }
+
+  .details-content {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .detail-row {
+    display: flex;
+    border-bottom: 1px solid var(--surface-border);
+    padding-bottom: 1rem;
+
+    &:last-child {
+      border-bottom: none;
+    }
+  }
+
+  .detail-label {
+    width: 150px;
+    font-weight: 600;
+    color: var(--text-color-secondary);
+  }
+
+  .detail-value {
+    flex: 1;
+    color: var(--text-color);
+
+    ::ng-deep {
+      .p-chip {
+        margin-right: 0.5rem;
+        margin-bottom: 0.5rem;
+      }
+    }
+  }
+}
+
+// Responsive styles
+@media screen and (max-width: 768px) {
+  .meeting-details-container {
+    padding: 1rem;
+
+    .card-header {
+      flex-direction: column;
+      gap: 1rem;
+      align-items: flex-start;
+    }
+
+    .detail-row {
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .detail-label {
+      width: 100%;
+    }
+  }
+} 

@@ -1,0 +1,133 @@
+.task-dashboard-container {
+  margin: 1rem;
+  
+  .card {
+    .card-header {
+      padding: 1rem;
+      background-color: var(--surface-card);
+      border-bottom: 1px solid var(--surface-border);
+
+      h2 {
+        margin: 0 0 1rem 0;
+        color: var(--text-color);
+      }
+
+      .filter-section {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        padding: 1rem 0;
+
+        .field {
+          label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--text-color);
+            font-weight: 500;
+          }
+        }
+      }
+    }
+
+    .card-content {
+      padding: 1rem;
+
+      .loading-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
+        
+        p {
+          margin-top: 1rem;
+          color: var(--text-color-secondary);
+        }
+      }
+
+      .task-timeline {
+        padding: 1rem;
+
+        .task-card {
+          background-color: var(--surface-card);
+          border-radius: 6px;
+          padding: 1rem;
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+          .task-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+
+            h3 {
+              margin: 0;
+              color: var(--text-color);
+            }
+
+            .task-actions {
+              display: flex;
+              gap: 0.5rem;
+            }
+          }
+
+          .task-content {
+            p {
+              margin: 0 0 1rem 0;
+              color: var(--text-color);
+            }
+
+            .task-meta {
+              display: grid;
+              grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+              gap: 1rem;
+              margin-bottom: 1rem;
+
+              .meta-item {
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+                color: var(--text-color-secondary);
+
+                i {
+                  color: var(--primary-color);
+                }
+              }
+            }
+
+            .task-status {
+              display: flex;
+              justify-content: flex-end;
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+:host ::ng-deep {
+  .p-timeline {
+    .p-timeline-event-content {
+      width: 100%;
+    }
+
+    .p-timeline-event-opposite {
+      display: none;
+    }
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .task-dashboard-container {
+    margin: 0.5rem;
+
+    .card {
+      .card-header {
+        .filter-section {
+          grid-template-columns: 1fr;
+        }
+      }
+    }
+  }
+} 

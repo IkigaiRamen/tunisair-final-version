@@ -1,0 +1,59 @@
+/* You can add global styles to this file, and also import other style files */
+@import 'primeflex/primeflex.scss';
+
+/* Reset and base styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  color: var(--text-color);
+  background-color: var(--surface-ground);
+}
+
+/* PrimeNG Theme Customization */
+:root {
+  --primary-color: #2196F3;
+  --primary-color-text: #ffffff;
+  --surface-ground: #f8f9fa;
+  --surface-section: #ffffff;
+  --text-color: #495057;
+  --text-color-secondary: #6c757d;
+  --border-radius: 6px;
+  --transition-duration: 0.2s;
+}
+
+/* Utility Classes */
+.p-card {
+  border-radius: var(--border-radius);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.p-button {
+  border-radius: var(--border-radius);
+  transition: all var(--transition-duration);
+}
+
+/* Layout */
+.layout-wrapper {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.layout-main {
+  flex: 1;
+  padding: 2rem;
+}
+
+/* Responsive Design */
+@media screen and (max-width: 960px) {
+  .layout-main {
+    padding: 1rem;
+  }
+} 

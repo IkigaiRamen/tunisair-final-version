@@ -1,0 +1,59 @@
+.card {
+    margin: 1rem;
+    
+    .card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem;
+        
+        h2 {
+            margin: 0;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 0.5rem;
+        }
+    }
+    
+    .card-body {
+        padding: 1rem;
+    }
+}
+
+.action-buttons {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.confirmation-content {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    
+    i {
+        margin-right: 1rem;
+    }
+}
+
+:host ::ng-deep {
+    .p-datatable {
+        .p-datatable-header {
+            padding: 1rem;
+        }
+        
+        .p-paginator {
+            .p-paginator-current {
+                margin-left: auto;
+            }
+        }
+    }
+    
+    .p-dialog {
+        .p-dialog-content {
+            padding: 0;
+        }
+    }
+} 
