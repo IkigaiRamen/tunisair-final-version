@@ -1,0 +1,129 @@
+<div class="user-profile-container">
+  <p-card header="User Profile">
+    <div class="profile-content">
+      <form [formGroup]="profileForm" (ngSubmit)="updateProfile()">
+        <div class="grid">
+          <div class="col-12 md:col-6">
+            <div class="field">
+              <label for="firstName">First Name</label>
+              <input pInputText id="firstName" formControlName="firstName" 
+                     [ngClass]="{'ng-invalid ng-dirty': profileForm.get('firstName')?.invalid && profileForm.get('firstName')?.touched}">
+              <small class="p-error" *ngIf="profileForm.get('firstName')?.invalid && profileForm.get('firstName')?.touched">
+                First name is required
+              </small>
+            </div>
+          </div>
+
+          <div class="col-12 md:col-6">
+            <div class="field">
+              <label for="lastName">Last Name</label>
+              <input pInputText id="lastName" formControlName="lastName"
+                     [ngClass]="{'ng-invalid ng-dirty': profileForm.get('lastName')?.invalid && profileForm.get('lastName')?.touched}">
+              <small class="p-error" *ngIf="profileForm.get('lastName')?.invalid && profileForm.get('lastName')?.touched">
+                Last name is required
+              </small>
+            </div>
+          </div>
+
+          <div class="col-12 md:col-6">
+            <div class="field">
+              <label for="email">Email</label>
+              <input pInputText id="email" formControlName="email" type="email"
+                     [ngClass]="{'ng-invalid ng-dirty': profileForm.get('email')?.invalid && profileForm.get('email')?.touched}">
+              <small class="p-error" *ngIf="profileForm.get('email')?.invalid && profileForm.get('email')?.touched">
+                Please enter a valid email address
+              </small>
+            </div>
+          </div>
+
+          <div class="col-12 md:col-6">
+            <div class="field">
+              <label for="phone">Phone</label>
+              <input pInputText id="phone" formControlName="phone">
+            </div>
+          </div>
+
+          <div class="col-12 md:col-6">
+            <div class="field">
+              <label for="department">Department</label>
+              <input pInputText id="department" formControlName="department">
+            </div>
+          </div>
+
+          <div class="col-12 md:col-6">
+            <div class="field">
+              <label for="position">Position</label>
+              <input pInputText id="position" formControlName="position">
+            </div>
+          </div>
+        </div>
+
+        <div class="flex justify-content-end mt-4">
+          <p-button type="submit" label="Update Profile" 
+                    [loading]="loading" 
+                    [disabled]="!profileForm.valid || loading">
+          </p-button>
+        </div>
+      </form>
+
+      <div class="mt-4">
+        <p-button label="Change Password" 
+                  (onClick)="showPasswordForm = true"
+                  styleClass="p-button-outlined">
+        </p-button>
+      </div>
+
+      <p-dialog header="Change Password" 
+                [(visible)]="showPasswordForm" 
+                [modal]="true"
+                [style]="{width: '450px'}"
+                [draggable]="false"
+                [resizable]="false">
+        <form [formGroup]="passwordForm" (ngSubmit)="updatePassword()">
+          <div class="field">
+            <label for="currentPassword">Current Password</label>
+            <input pInputText id="currentPassword" 
+                   type="password" 
+                   formControlName="currentPassword"
+                   [ngClass]="{'ng-invalid ng-dirty': passwordForm.get('currentPassword')?.invalid && passwordForm.get('currentPassword')?.touched}">
+            <small class="p-error" *ngIf="passwordForm.get('currentPassword')?.invalid && passwordForm.get('currentPassword')?.touched">
+              Current password is required
+            </small>
+          </div>
+
+          <div class="field">
+            <label for="newPassword">New Password</label>
+            <input pInputText id="newPassword" 
+                   type="password" 
+                   formControlName="newPassword"
+                   [ngClass]="{'ng-invalid ng-dirty': passwordForm.get('newPassword')?.invalid && passwordForm.get('newPassword')?.touched}">
+            <small class="p-error" *ngIf="passwordForm.get('newPassword')?.invalid && passwordForm.get('newPassword')?.touched">
+              Password must be at least 8 characters
+            </small>
+          </div>
+
+          <div class="field">
+            <label for="confirmPassword">Confirm New Password</label>
+            <input pInputText id="confirmPassword" 
+                   type="password" 
+                   formControlName="confirmPassword"
+                   [ngClass]="{'ng-invalid ng-dirty': passwordForm.get('confirmPassword')?.invalid && passwordForm.get('confirmPassword')?.touched}">
+            <small class="p-error" *ngIf="passwordForm.get('confirmPassword')?.invalid && passwordForm.get('confirmPassword')?.touched">
+              Passwords must match
+            </small>
+          </div>
+
+          <div class="flex justify-content-end mt-4">
+            <p-button type="submit" 
+                      label="Update Password" 
+                      [loading]="loading"
+                      [disabled]="!passwordForm.valid || loading">
+            </p-button>
+          </div>
+        </form>
+      </p-dialog>
+    </div>
+  </p-card>
+</div>
+
+<p-toast></p-toast> 

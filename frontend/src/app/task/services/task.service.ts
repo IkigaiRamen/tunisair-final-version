@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { Task, TaskStatus, TaskPriority } from '../models/task.model';
 import { environment } from '../../../environments/environment';
+import { Task, TaskPriority, TaskStatus } from '../models/task.model';
 
 @Injectable({
   providedIn: 'root'
@@ -11,6 +11,14 @@ export class TaskService {
   private apiUrl = `${environment.apiUrl}/tasks`;
 
   constructor(private http: HttpClient) { }
+
+  getAllTasks(): Observable<Task[]> {
+    return this.http.get<Task[]>(this.apiUrl);
+  }
+
+  getTaskById(id: number): Observable<Task> {
+    return this.http.get<Task>(`${this.apiUrl}/${id}`);
+  }
 
   createTask(task: Partial<Task>): Observable<Task> {
     return this.http.post<Task>(this.apiUrl, task);
@@ -24,18 +32,6 @@ export class TaskService {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
   }
 
-  getTaskById(id: number): Observable<Task> {
-    return this.http.get<Task>(`${this.apiUrl}/${id}`);
-  }
-
-  getAllTasks(): Observable<Task[]> {
-    return this.http.get<Task[]>(this.apiUrl);
-  }
-
-  getTasksByAssignee(assigneeId: number): Observable<Task[]> {
-    return this.http.get<Task[]>(`${this.apiUrl}/assignee/${assigneeId}`);
-  }
-
   getTasksByStatus(status: TaskStatus): Observable<Task[]> {
     return this.http.get<Task[]>(`${this.apiUrl}/status/${status}`);
   }
@@ -44,8 +40,8 @@ export class TaskService {
     return this.http.get<Task[]>(`${this.apiUrl}/priority/${priority}`);
   }
 
-  getOverdueTasks(): Observable<Task[]> {
-    return this.http.get<Task[]>(`${this.apiUrl}/overdue`);
+  getTasksByAssignee(userId: number): Observable<Task[]> {
+    return this.http.get<Task[]>(`${this.apiUrl}/assignee/${userId}`);
   }
 
   getTasksByDateRange(startDate: Date, endDate: Date): Observable<Task[]> {
@@ -57,6 +53,10 @@ export class TaskService {
     });
   }
 
+  getOverdueTasks(): Observable<Task[]> {
+    return this.http.get<Task[]>(`${this.apiUrl}/overdue`);
+  }
+
   updateTaskStatus(id: number, status: TaskStatus): Observable<Task> {
     return this.http.put<Task>(`${this.apiUrl}/${id}/status`, { status });
   }
@@ -65,7 +65,23 @@ export class TaskService {
     return this.http.put<Task>(`${this.apiUrl}/${id}/priority`, { priority });
   }
 
-  assignTask(id: number, assigneeId: number): Observable<Task> {
-    return this.http.put<Task>(`${this.apiUrl}/${id}/assign`, { assigneeId });
+  assignTask(id: number, userId: number): Observable<Task> {
+    return this.http.put<Task>(`${this.apiUrl}/${id}/assign`, { userId });
+  }
+
+  markAsCompleted(id: number): Observable<Task> {
+    return this.http.put<Task>(`${this.apiUrl}/${id}/complete`, {});
+  }
+
+  getTasksByDecision(decisionId: number): Observable<Task[]> {
+    return this.http.get<Task[]>(`${this.apiUrl}/decision/${decisionId}`);
+  }
+
+  getTasksByMeeting(meetingId: number): Observable<Task[]> {
+    return this.http.get<Task[]>(`${this.apiUrl}/meeting/${meetingId}`);
+  }
+
+  getPendingTasksByUser(userId: number): Observable<Task[]> {
+    return this.http.get<Task[]>(`${this.apiUrl}/pending/user/${userId}`);
   }
 } 

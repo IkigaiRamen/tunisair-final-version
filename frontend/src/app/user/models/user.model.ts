@@ -4,12 +4,11 @@ export interface User {
   email: string;
   firstName: string;
   lastName: string;
+  phone?: string;
+  department?: string;
+  position?: string;
   role: UserRole;
-  department: string;
-  position: string;
-  phoneNumber: string;
-  isActive: boolean;
-  lastLoginDate: Date;
+  enabled: boolean;
   createdAt: Date;
   updatedAt: Date;
 }

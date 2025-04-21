@@ -1,0 +1,115 @@
+<div class="task-list-container">
+  <p-card header="Tasks">
+    <div class="card-header">
+      <h2>Task Management</h2>
+      <div class="action-buttons">
+        <p-button label="New Task" icon="pi pi-plus" (onClick)="createNewTask()"></p-button>
+      </div>
+    </div>
+
+    <div class="filter-section">
+      <div class="grid">
+        <div class="col-12 md:col-3">
+          <div class="field">
+            <label for="statusFilter">Status</label>
+            <p-dropdown id="statusFilter" [options]="statuses" [(ngModel)]="statusFilter" 
+                      placeholder="Filter by status" [showClear]="true">
+            </p-dropdown>
+          </div>
+        </div>
+        
+        <div class="col-12 md:col-3">
+          <div class="field">
+            <label for="priorityFilter">Priority</label>
+            <p-dropdown id="priorityFilter" [options]="priorities" [(ngModel)]="priorityFilter" 
+                      placeholder="Filter by priority" [showClear]="true">
+            </p-dropdown>
+          </div>
+        </div>
+        
+        <div class="col-12 md:col-3">
+          <div class="field">
+            <label for="assigneeFilter">Assignee</label>
+            <p-dropdown id="assigneeFilter" [options]="users" [(ngModel)]="assigneeFilter" 
+                      placeholder="Filter by assignee" [showClear]="true"
+                      optionLabel="firstName" [optionValue]="'id'">
+              <ng-template pTemplate="selectedItem" let-user>
+                {{user.firstName}} {{user.lastName}}
+              </ng-template>
+              <ng-template pTemplate="item" let-user>
+                {{user.firstName}} {{user.lastName}}
+              </ng-template>
+            </p-dropdown>
+          </div>
+        </div>
+        
+        <div class="col-12 md:col-3">
+          <div class="field">
+            <label for="dateRangeFilter">Date Range</label>
+            <p-calendar id="dateRangeFilter" [(ngModel)]="dateRangeFilter" selectionMode="range" 
+                      [showIcon]="true" placeholder="Filter by date range" [showClear]="true">
+            </p-calendar>
+          </div>
+        </div>
+      </div>
+      
+      <div class="filter-actions">
+        <p-button label="Apply Filters" icon="pi pi-filter" (onClick)="applyFilters()"></p-button>
+        <p-button label="Clear Filters" icon="pi pi-times" styleClass="p-button-outlined" (onClick)="clearFilters()"></p-button>
+      </div>
+    </div>
+
+    <p-table [value]="tasks" [loading]="loading" [paginator]="true" [rows]="rows" 
+             [totalRecords]="totalRecords" [first]="first" (onPage)="onPageChange($event)"
+             [rowsPerPageOptions]="[5, 10, 25, 50]" [showCurrentPageReport]="true"
+             currentPageReportTemplate="Showing {first} to {last} of {totalRecords} tasks"
+             [globalFilterFields]="['title', 'description', 'status', 'priority']"
+             responsiveLayout="scroll">
+      <ng-template pTemplate="header">
+        <tr>
+          <th pSortableColumn="title">Title <p-sortIcon field="title"></p-sortIcon></th>
+          <th pSortableColumn="status">Status <p-sortIcon field="status"></p-sortIcon></th>
+          <th pSortableColumn="priority">Priority <p-sortIcon field="priority"></p-sortIcon></th>
+          <th pSortableColumn="dueDate">Due Date <p-sortIcon field="dueDate"></p-sortIcon></th>
+          <th>Assignee</th>
+          <th>Actions</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-task>
+        <tr>
+          <td>{{task.title}}</td>
+          <td>
+            <p-tag [value]="task.status" [severity]="getStatusSeverity(task.status)"></p-tag>
+          </td>
+          <td>
+            <p-tag [value]="task.priority" [severity]="getPrioritySeverity(task.priority)"></p-tag>
+          </td>
+          <td>{{task.dueDate | date:'mediumDate'}}</td>
+          <td>{{getAssigneeName(task)}}</td>
+          <td>
+            <div class="action-buttons">
+              <p-button icon="pi pi-eye" styleClass="p-button-rounded p-button-text" 
+                        (onClick)="viewTask(task.id)" pTooltip="View Task"></p-button>
+              <p-button icon="pi pi-pencil" styleClass="p-button-rounded p-button-text" 
+                        (onClick)="editTask(task.id)" pTooltip="Edit Task"></p-button>
+              <p-button icon="pi pi-trash" styleClass="p-button-rounded p-button-text p-button-danger" 
+                        (onClick)="deleteTask(task.id)" pTooltip="Delete Task"></p-button>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="6" class="text-center p-4">
+            <div class="empty-message">
+              <i class="pi pi-info-circle" style="font-size: 2rem"></i>
+              <p>No tasks found</p>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </p-card>
+</div>
+
+<p-toast></p-toast> 

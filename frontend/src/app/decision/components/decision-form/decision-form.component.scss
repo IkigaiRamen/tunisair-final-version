@@ -1,0 +1,52 @@
+.decision-form-container {
+  padding: 1rem;
+
+  .field {
+    margin-bottom: 1.5rem;
+
+    label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 500;
+      color: var(--text-color);
+    }
+
+    input, textarea, .p-dropdown {
+      width: 100%;
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 100px;
+    }
+
+    .p-dropdown {
+      ::ng-deep {
+        .p-dropdown-label {
+          padding: 0.5rem;
+        }
+      }
+    }
+
+    small.p-error {
+      color: var(--red-500);
+      font-size: 0.875rem;
+      margin-top: 0.25rem;
+    }
+  }
+
+  .p-button {
+    min-width: 100px;
+  }
+}
+
+// Responsive adjustments
+@media screen and (max-width: 768px) {
+  .decision-form-container {
+    padding: 0.5rem;
+
+    .field {
+      margin-bottom: 1rem;
+    }
+  }
+} 

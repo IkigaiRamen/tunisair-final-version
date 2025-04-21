@@ -1,0 +1,96 @@
+<div class="task-form-container">
+  <p-card [header]="isEditMode ? 'Edit Task' : 'Create Task'">
+    <div class="loading-spinner" *ngIf="loading">
+      <p-progressSpinner></p-progressSpinner>
+    </div>
+
+    <form [formGroup]="taskForm" (ngSubmit)="onSubmit()" *ngIf="!loading">
+      <div class="form-grid">
+        <div class="form-field">
+          <label for="title">Title*</label>
+          <input pInputText id="title" formControlName="title" 
+                 [ngClass]="{'ng-invalid ng-dirty': taskForm.get('title')?.invalid && taskForm.get('title')?.touched}">
+          <small class="p-error" *ngIf="taskForm.get('title')?.invalid && taskForm.get('title')?.touched">
+            Title is required and must be at least 3 characters long
+          </small>
+        </div>
+
+        <div class="form-field">
+          <label for="description">Description*</label>
+          <textarea pInputTextarea id="description" formControlName="description" rows="3"
+                    [ngClass]="{'ng-invalid ng-dirty': taskForm.get('description')?.invalid && taskForm.get('description')?.touched}">
+          </textarea>
+          <small class="p-error" *ngIf="taskForm.get('description')?.invalid && taskForm.get('description')?.touched">
+            Description is required
+          </small>
+        </div>
+
+        <div class="form-field">
+          <label for="status">Status*</label>
+          <p-dropdown id="status" [options]="statuses" formControlName="status"
+                     [ngClass]="{'ng-invalid ng-dirty': taskForm.get('status')?.invalid && taskForm.get('status')?.touched}">
+          </p-dropdown>
+          <small class="p-error" *ngIf="taskForm.get('status')?.invalid && taskForm.get('status')?.touched">
+            Status is required
+          </small>
+        </div>
+
+        <div class="form-field">
+          <label for="priority">Priority*</label>
+          <p-dropdown id="priority" [options]="priorities" formControlName="priority"
+                     [ngClass]="{'ng-invalid ng-dirty': taskForm.get('priority')?.invalid && taskForm.get('priority')?.touched}">
+          </p-dropdown>
+          <small class="p-error" *ngIf="taskForm.get('priority')?.invalid && taskForm.get('priority')?.touched">
+            Priority is required
+          </small>
+        </div>
+
+        <div class="form-field">
+          <label for="dueDate">Due Date*</label>
+          <p-calendar id="dueDate" formControlName="dueDate" [showTime]="true" dateFormat="dd/mm/yy"
+                     [ngClass]="{'ng-invalid ng-dirty': taskForm.get('dueDate')?.invalid && taskForm.get('dueDate')?.touched}">
+          </p-calendar>
+          <small class="p-error" *ngIf="taskForm.get('dueDate')?.invalid && taskForm.get('dueDate')?.touched">
+            Due date is required
+          </small>
+        </div>
+
+        <div class="form-field">
+          <label for="assignee">Assignee*</label>
+          <p-dropdown id="assignee" [options]="users" formControlName="assignee" optionLabel="fullName"
+                     [ngClass]="{'ng-invalid ng-dirty': taskForm.get('assignee')?.invalid && taskForm.get('assignee')?.touched}">
+          </p-dropdown>
+          <small class="p-error" *ngIf="taskForm.get('assignee')?.invalid && taskForm.get('assignee')?.touched">
+            Assignee is required
+          </small>
+        </div>
+
+        <div class="form-field">
+          <label for="decision">Related Decision</label>
+          <p-dropdown id="decision" [options]="decisions" formControlName="decision" optionLabel="title"
+                     [showClear]="true">
+          </p-dropdown>
+        </div>
+
+        <div class="form-field">
+          <label for="meeting">Related Meeting</label>
+          <p-dropdown id="meeting" [options]="meetings" formControlName="meeting" optionLabel="title"
+                     [showClear]="true">
+          </p-dropdown>
+        </div>
+
+        <div class="form-field">
+          <label for="progress">Progress (%)</label>
+          <p-slider id="progress" formControlName="progress" [min]="0" [max]="100"></p-slider>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <p-button type="button" label="Cancel" styleClass="p-button-secondary" (click)="cancel()"></p-button>
+        <p-button type="submit" label="Save" [loading]="submitting"></p-button>
+      </div>
+    </form>
+  </p-card>
+</div>
+
+<p-toast></p-toast> 

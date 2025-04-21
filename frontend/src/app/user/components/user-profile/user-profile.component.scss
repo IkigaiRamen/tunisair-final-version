@@ -1,0 +1,54 @@
+.user-profile-container {
+  max-width: 800px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+
+  .profile-content {
+    .field {
+      margin-bottom: 1.5rem;
+
+      label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+        color: var(--text-color);
+      }
+
+      input {
+        width: 100%;
+        padding: 0.5rem;
+        border: 1px solid var(--surface-border);
+        border-radius: 4px;
+        transition: border-color 0.2s;
+
+        &:focus {
+          outline: none;
+          border-color: var(--primary-color);
+        }
+
+        &.ng-invalid.ng-dirty {
+          border-color: var(--red-500);
+        }
+      }
+
+      small.p-error {
+        color: var(--red-500);
+        font-size: 0.875rem;
+        margin-top: 0.25rem;
+      }
+    }
+  }
+}
+
+// Responsive adjustments
+@media screen and (max-width: 768px) {
+  .user-profile-container {
+    margin: 1rem auto;
+
+    .profile-content {
+      .field {
+        margin-bottom: 1rem;
+      }
+    }
+  }
+} 
