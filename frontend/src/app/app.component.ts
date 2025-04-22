@@ -1,28 +1,12 @@
 import { Component } from '@angular/core';
+import { RouterOutlet } from '@angular/router';
 
 @Component({
   selector: 'app-root',
-  template: `
-    <div class="layout-wrapper">
-      <app-header></app-header>
-      <div class="layout-main">
-        <router-outlet></router-outlet>
-      </div>
-      <app-footer></app-footer>
-    </div>
-  `,
-  styles: [`
-    .layout-wrapper {
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-    }
-    .layout-main {
-      flex: 1;
-      padding: 2rem;
-    }
-  `]
+  imports: [RouterOutlet],
+  templateUrl: './app.component.html',
+  styleUrl: './app.component.scss'
 })
 export class AppComponent {
-  title = 'Tunisair Meeting Management';
-} 
+  title = 'tunisair-meetings-frontend';
+}

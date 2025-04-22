@@ -1,81 +1,51 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, Observable, tap } from 'rxjs';
+import { Observable } from 'rxjs';
+import { ApiService } from './api.service';
+import { LoginRequest } from '../models/login-request.model';
+import { SignupRequest } from '../models/signup-request.model';
+import { JwtResponse } from '../models/jwt-response.model';
+import { MessageResponse } from '../models/message-response.model';
 import { User } from '../models/user.model';
-import { environment } from '../../../environments/environment';
 
-@Injectable({
-  providedIn: 'root'
-})
+@Injectable({ providedIn: 'root' })
 export class AuthService {
-  private currentUserSubject: BehaviorSubject<User | null>;
-  public currentUser$: Observable<User | null>;
-  private readonly TOKEN_KEY = 'auth_token';
-  private readonly USER_KEY = 'current_user';
+  constructor(private api: ApiService) {}
 
-  constructor(private http: HttpClient) {
-    this.currentUserSubject = new BehaviorSubject<User | null>(
-      this.getStoredUser()
-    );
-    this.currentUser$ = this.currentUserSubject.asObservable();
+  login(credentials: LoginRequest): Observable<JwtResponse> {
+    return this.api.post<JwtResponse>('/auth/signin', credentials);
   }
 
-  public get currentUserValue(): User | null {
-    return this.currentUserSubject.value;
+  signup(data: SignupRequest): Observable<MessageResponse> {
+    return this.api.post<MessageResponse>('/auth/signup', data);
   }
 
-  login(username: string, password: string): Observable<any> {
-    return this.http.post<any>(`${environment.apiUrl}/auth/login`, { username, password })
-      .pipe(
-        tap(response => {
-          if (response.token) {
-            localStorage.setItem(this.TOKEN_KEY, response.token);
-            this.setCurrentUser(response.user);
-          }
-        })
-      );
+  signupAdmin(data: SignupRequest): Observable<MessageResponse> {
+    return this.api.post<MessageResponse>('/auth/signup/admin', data);
+  }
+
+  me(): Observable<User> {
+    return this.api.get<User>('/auth/me');
   }
 
   logout(): void {
-    localStorage.removeItem(this.TOKEN_KEY);
-    localStorage.removeItem(this.USER_KEY);
-    this.currentUserSubject.next(null);
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
   }
 
-  register(userData: Partial<User>): Observable<any> {
-    return this.http.post<any>(`${environment.apiUrl}/auth/register`, userData);
-  }
-
-  refreshToken(): Observable<any> {
-    return this.http.post<any>(`${environment.apiUrl}/auth/refresh-token`, {})
-      .pipe(
-        tap(response => {
-          if (response.token) {
-            localStorage.setItem(this.TOKEN_KEY, response.token);
-          }
-        })
-      );
-  }
-
-  isAuthenticated(): boolean {
-    return !!this.getToken();
-  }
-
-  hasRole(role: string): boolean {
-    return this.currentUserValue?.roles.some(r => r.name === role) || false;
+  setToken(token: string): void {
+    localStorage.setItem('token', token);
   }
 
   getToken(): string | null {
-    return localStorage.getItem(this.TOKEN_KEY);
+    return localStorage.getItem('token');
   }
 
-  private setCurrentUser(user: User): void {
-    localStorage.setItem(this.USER_KEY, JSON.stringify(user));
-    this.currentUserSubject.next(user);
+  setUser(user: User): void {
+    localStorage.setItem('user', JSON.stringify(user));
   }
 
-  private getStoredUser(): User | null {
-    const userStr = localStorage.getItem(this.USER_KEY);
-    return userStr ? JSON.parse(userStr) : null;
+  getUser(): User | null {
+    const data = localStorage.getItem('user');
+    return data ? JSON.parse(data) as User : null;
   }
 } 

@@ -1,0 +1,156 @@
+ANGULAR + TAILWIND FRONTEND DEVELOPMENT PLAN
+
+1. PROJECT SETUP
+   • Create Angular project:
+       ng new tunisair-meetings-frontend --routing --style=scss
+   • Install Tailwind CSS:
+       npm install -D tailwindcss postcss autoprefixer
+       npx tailwindcss init
+       Configure tailwind.config.js:
+         content: ["src/**/*.{html,ts}"]
+       In src/styles.scss:
+         @import "tailwindcss/base";
+         @import "tailwindcss/components";
+         @import "tailwindcss/utilities";
+   • (Optional) Install Angular Material or Headless UI for dialogs.
+
+2. CORE MODULE (src/app/core/)
+
+2.1 MODELS (src/app/core/models/)
+
+  a. Auth & Payloads:
+     - LoginRequest:
+         { email: string; password: string; }
+     - SignupRequest:
+         { fullName: string; email: string; password: string; roles?: string[]; }
+     - JwtResponse:
+         { token: string; type: "Bearer"; id: number; email: string; fullName: string; roles: string[]; }
+     - MessageResponse:
+         { message: string; }
+
+  b. Role & User:
+     - RoleName = "ROLE_ADMIN" | "ROLE_SECRETARY" | "ROLE_BOARD_MEMBER"
+     - Role: { id: number; name: RoleName; }
+     - User:
+         { id: number; fullName: string; email: string; password?: string; roles: Role[]; enabled: boolean; }
+
+  c. Meeting:
+     { id: number; title: string; agenda?: string; objectives?: string;
+       dateTime: string; createdBy: User; participants: User[];
+       documents: Document[]; decisions: Decision[];
+       createdAt: string; updatedAt: string; }
+
+  d. Document:
+     { id: number; name: string; type: string; path: string;
+       version: number; meeting: Meeting; uploadedBy: User;
+       createdAt?: string; updatedAt?: string;
+       description?: string; size?: number; }
+
+  e. Decision:
+     { id: number; content: string; meeting: Meeting;
+       responsibleUser: User; deadline: string;
+       createdAt?: string; updatedAt?: string; tasks: Task[]; }
+
+  f. Task:
+     { id: number; description: string; status: "PENDING"|"IN_PROGRESS"|"COMPLETED";
+       decision: Decision; assignedTo: User;
+       deadline: string; createdAt?: string; updatedAt?: string; }
+
+  g. NotificationLog:
+     { id: number; user: User; message: string;
+       type: "EMAIL"|"SYSTEM"; sentAt: string; read: boolean; }
+
+2.2 API SERVICE & AUTH INTERCEPTOR
+
+  • ApiService:
+      baseUrl = environment.apiUrl (e.g. http://localhost:8080/api)
+      methods: get<T>(path, params?), post<T>(path, body), put<T>(path, body), delete<T>(path)
+
+  • AuthInterceptor:
+      attaches Authorization: Bearer <token> from localStorage to all requests.
+
+2.3 AUTH SERVICE
+
+  • login(creds: LoginRequest): POST /auth/login → JwtResponse
+  • signup(data: SignupRequest): POST /auth/signup → MessageResponse
+  • signupAdmin(data: SignupRequest): POST /auth/signup/admin → MessageResponse
+  • me(): GET /auth/me → User
+
+2.4 DOMAIN SERVICES    (mirror backend endpoints)
+
+  • UsersService:
+      getAll(): GET /users → User[]
+      getById(id): GET /users/:id → User
+      create(user): POST /users → User
+      update(id, user): PUT /users/:id → User
+      delete(id): DELETE /users/:id
+      getByRole(role): GET /users/role/:roleName → User[]
+
+  • MeetingsService:
+      list(): GET /meetings → Meeting[]
+      detail(id): GET /meetings/:id → Meeting
+      create(data): POST /meetings → Meeting
+      update(id, data): PUT /meetings/:id → Meeting
+      delete(id): DELETE /meetings/:id
+      addParticipant(meetingId, userId): POST /meetings/:meetingId/participants?userId=
+
+  • DocumentsService:
+      list(meetingId?): GET /documents?meetingId= → Document[]
+      upload(formData): POST /documents → Document
+      download(id): GET /documents/:id/download → Blob
+
+  • DecisionService:
+      list(meetingId?): GET /decisions?meetingId= → Decision[]
+      create(data): POST /decisions → Decision
+      update(id, data): PUT /decisions/:id → Decision
+      delete(id): DELETE /decisions/:id
+
+  • TaskService:
+      list(filters): GET /tasks?assignedTo=&status= → Task[]
+      create(data): POST /tasks → Task
+      update(id, data): PUT /tasks/:id → Task
+      delete(id): DELETE /tasks/:id
+
+  • NotificationService:
+      list(): GET /notifications → NotificationLog[]
+      send(data): POST /notifications → NotificationLog
+
+  • ReportService:
+      generate(format=excel|pdf): GET /reports?format=
+
+3. FEATURE MODULES & ROUTING
+
+  // app-routing.module.ts
+  const routes: Routes = [
+    { path: 'login', loadChildren: () => import('./auth/auth.module').then(m => m.AuthModule) },
+    { path: '', component: DashboardComponent, canActivate: [AuthGuard] },
+    { path: 'users', loadChildren: () => import('./users/users.module').then(m => m.UsersModule), canActivate: [RoleGuard], data: { roles: ['ROLE_ADMIN'] } },
+    { path: 'meetings', loadChildren: () => import('./meetings/meetings.module').then(m => m.MeetingsModule) },
+    { path: 'documents', loadChildren: () => import('./documents/documents.module').then(m => m.DocumentsModule) },
+    { path: 'decisions', loadChildren: () => import('./decisions/decisions.module').then(m => m.DecisionsModule) },
+    { path: 'tasks', loadChildren: () => import('./tasks/tasks.module').then(m => m.TasksModule) },
+    { path: 'notifications', loadChildren: () => import('./notifications/notifications.module').then(m => m.NotificationsModule) },
+    { path: 'reports', loadChildren: () => import('./reports/reports.module').then(m => m.ReportsModule) },
+  ];
+
+Each feature module: List, Detail, Form components + routing.
+
+4. SHARED & UI
+   • SharedModule: Buttons, Tables, Forms styled with Tailwind
+   • Components: Navbar, Sidebar, Breadcrumbs
+   • Pipes: date-format, status-badge
+   • Directives: autofocus, file-drop
+
+Design system in tailwind.config.js:
+  theme.extend.colors: { primary: '#0055A4', secondary: '#FFC20E' }
+  fontFamily.sans: ['Inter', 'sans-serif']
+
+5. GUARDS & STATE
+   • AuthGuard: blocks unauthenticated routes
+   • RoleGuard: checks user.roles
+   • State: RxJS BehaviorSubjects or NgRx store per feature
+
+6. TESTING & CI
+   • Unit tests for services/guards (Jest/Karma)
+   • E2E tests (Cypress)
+   • CI (GitHub Actions): lint, build, test, deploy 

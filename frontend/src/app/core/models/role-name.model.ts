@@ -1,0 +1,1 @@
+export type RoleName = 'ROLE_ADMIN' | 'ROLE_SECRETARY' | 'ROLE_BOARD_MEMBER'; 
