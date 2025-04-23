@@ -12,7 +12,7 @@ export class AuthService {
   constructor(private api: ApiService) {}
 
   login(credentials: LoginRequest): Observable<JwtResponse> {
-    return this.api.post<JwtResponse>('/auth/signin', credentials);
+    return this.api.post<JwtResponse>('/auth/login', credentials);
   }
 
   signup(data: SignupRequest): Observable<MessageResponse> {
