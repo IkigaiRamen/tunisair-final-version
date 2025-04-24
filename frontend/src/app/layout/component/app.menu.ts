@@ -27,9 +27,9 @@ export class AppMenu {
             {
                 label: 'Meetings',
                 items: [
-                    { label: 'Upcoming Meetings', icon: 'pi pi-fw pi-calendar', routerLink: ['/meetings/upcoming'] },
-                    { label: 'Past Meetings', icon: 'pi pi-fw pi-history', routerLink: ['/meetings/archive'] },
-                    { label: 'Plan New Meeting', icon: 'pi pi-fw pi-plus', routerLink: ['/meetings/new'] }
+                    { label: 'Upcoming Meetings', icon: 'pi pi-fw pi-calendar', routerLink: ['/', 'meetings', 'upcoming'] },
+                    { label: 'Past Meetings', icon: 'pi pi-fw pi-history', routerLink: ['/', 'meetings', 'past'] },
+                    { label: 'Plan New Meeting', icon: 'pi pi-fw pi-plus', routerLink: ['/', 'meetings', 'new'] }
                 ]
             },
             {
@@ -63,7 +63,7 @@ export class AppMenu {
             },
             {
                 label: 'User Management',
-                items: [{ label: 'Users & Roles', icon: 'pi pi-fw pi-users', routerLink: ['/admin/users'] }]
+                items: [{ label: 'Users & Roles', icon: 'pi pi-fw pi-users', routerLink: ['/pages/admin'] }]
             },
             {
                 label: 'Settings',

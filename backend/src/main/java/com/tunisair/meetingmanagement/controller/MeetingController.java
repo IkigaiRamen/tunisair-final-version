@@ -80,6 +80,18 @@ public class MeetingController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end) {
         return ResponseEntity.ok(meetingService.getMeetingsByDateRange(start, end));
     }
+    @GetMapping("/past")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<List<Meeting>> getPastMeetings(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start) {
+        return ResponseEntity.ok(meetingService.getPastMeetings(start));
+    }
+    @GetMapping("/upcoming")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<List<Meeting>> getUpcomingMeetings(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start) {
+        return ResponseEntity.ok(meetingService.getUpcomingMeetings(start));
+    }
 
     @GetMapping("/search")
     @PreAuthorize("isAuthenticated()")

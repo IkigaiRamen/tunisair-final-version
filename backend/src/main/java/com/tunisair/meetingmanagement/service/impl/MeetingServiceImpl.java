@@ -75,6 +75,18 @@ public class MeetingServiceImpl implements MeetingService {
     }
 
     @Override
+    public List<Meeting> getUpcomingMeetings(LocalDateTime start) {
+        return meetingRepository.findByDateTimeAfter(start);
+    }
+
+    @Override
+    public List<Meeting> getPastMeetings(LocalDateTime start) {
+        return meetingRepository.findByDateTimeBefore(start);
+    }
+
+
+
+    @Override
     public List<Meeting> searchMeetingsByTitle(String title) {
         return meetingRepository.findByTitleContainingIgnoreCase(title);
     }

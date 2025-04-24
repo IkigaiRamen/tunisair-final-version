@@ -25,6 +25,7 @@ import { User } from '../../core/models/user.model';
 import { AuthService } from '../../core/services/auth.service';
 import { UsersService } from '../../core/services/users.service';
 import { MultiSelect, MultiSelectModule } from 'primeng/multiselect';
+import { CalendarModule } from 'primeng/calendar';
 interface Column {
     field: string;
     header: string;
@@ -59,6 +60,7 @@ interface ExportColumn {
         IconFieldModule,
         ConfirmDialogModule,
         MultiSelectModule,
+        CalendarModule,
     ],
     template: `
         <p-toolbar styleClass="mb-6">
@@ -103,6 +105,10 @@ interface ExportColumn {
                         Title
                         <p-sortIcon field="Title" />
                     </th>
+                       <th pSortableColumn="dateTime" style="min-width:16rem">
+                        Date
+                        <p-sortIcon field="dateTime" />
+                    </th>
                   
                     <th pSortableColumn="Created By" style="min-width:10rem">
                         Created By
@@ -123,13 +129,16 @@ interface ExportColumn {
                     </td>
                     <td style="min-width: 12rem">{{ meeting.title }}</td>
                     <td style="min-width: 16rem">{{ meeting.dateTime | date: 'medium' }}</td>
-
-                    <td>{{ meeting.createdBy?.fullName || 'N/A' }}</td>
-                    <td style="min-width: 16rem">
+                      <td>{{ meeting.createdBy?.fullName || 'N/A' }}</td>
+                      <td style="min-width: 16rem">
                         <span *ngFor="let p of meeting.participants" class="mr-2">
                             <p-tag [value]="p.fullName" severity="info" />
                         </span>
                     </td>
+                    
+
+                  
+                    
                     <td>
                         <p-button icon="pi pi-pencil" class="mr-2" [rounded]="true" [outlined]="true" (click)="editMeeting(meeting)" />
                         <p-button icon="pi pi-trash" severity="danger" [rounded]="true" [outlined]="true" (click)="deleteMeeting(meeting)" />
@@ -157,11 +166,18 @@ interface ExportColumn {
                         <label for="objectives" class="block font-bold mb-2">Objectives</label>
                         <textarea pTextarea id="objectives" rows="3" [(ngModel)]="meeting.objectives"required rows="3" cols="20" fluid></textarea>
                     </div>
+<div>
+  <label for="dateTime" class="block font-bold mb-2">Date & Time</label>
+  <p-calendar
+    [(ngModel)]="meeting.dateTime"
+    [showTime]="true"
+    hourFormat="24"
+    dateFormat="yy-mm-dd"
+    [showIcon]="true"
+    class="w-full"
+  fluid></p-calendar>
+</div>
 
-                    <div>
-                        <label for="dateTime" class="block font-bold mb-2">Date & Time</label>
-                        <input type="datetime-local" id="dateTime" [(ngModel)]="meeting.dateTime" class="p-inputtext w-full" />
-                    </div>
 
                     <div>
                         <label for="participants" class="block font-bold mb-2">Participants</label>
@@ -219,7 +235,7 @@ export class meetings implements OnInit {
         private confirmationService: ConfirmationService,
         private authService: AuthService,
         private userService: UsersService,
-    ) {}
+    ) { }
 
     exportCSV() {
         this.dt.exportCSV();
@@ -229,12 +245,12 @@ export class meetings implements OnInit {
         this.loadDemoData();
         this.userService.getAll().subscribe({
             next: (users) => {
-              this.userList = users; // No need to map or add fullName manually
+                this.userList = users; // No need to map or add fullName manually
             },
             error: (err) => {
-              console.error('Error fetching users', err);
+                console.error('Error fetching users', err);
             }
-          });
+        });
     }
 
     loadDemoData() {

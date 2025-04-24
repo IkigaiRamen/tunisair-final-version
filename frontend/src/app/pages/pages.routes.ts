@@ -3,11 +3,13 @@ import { Documentation } from './documentation/documentation';
 import { Crud } from './crud/crud';
 import { Empty } from './empty/empty';
 import {  meetings } from './meetings/meetings';
-
+import { AdminCrudComponent } from './admin/adminCrud';
+import { upcomingMeetings } from './meetings/upcomingMeetings';
+import { pastMeetings } from './meetings/pastMeetings';
 export default [
     { path: 'documentation', component: Documentation },
     { path: 'crud', component: Crud },
-    { path: 'meetingcrud',component: meetings},
     { path: 'empty', component: Empty },
-    { path: '**', redirectTo: '/notfound' }
+    { path: 'admin', component: AdminCrudComponent },
+    { path: '**', redirectTo: '/notfound' },
 ] as Routes;

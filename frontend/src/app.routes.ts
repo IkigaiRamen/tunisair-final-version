@@ -5,14 +5,26 @@ import { Documentation } from './app/pages/documentation/documentation';
 import { Landing } from './app/pages/landing/landing';
 import { Notfound } from './app/pages/notfound/notfound';
 
+import { meetings } from './app/pages/meetings/meetings';
+import { upcomingMeetings } from './app/pages/meetings/upcomingMeetings';
+import { pastMeetings } from './app/pages/meetings/pastMeetings';
+
 export const appRoutes: Routes = [
     {
         path: '',
         component: AppLayout,
         children: [
             { path: '', component: Dashboard },
-            { path: 'uikit', loadChildren: () => import('./app/pages/uikit/uikit.routes') },
             { path: 'documentation', component: Documentation },
+            {
+                path: 'meetings',
+                children: [
+                    { path: 'new', component: meetings },
+                    { path: 'upcoming', component: upcomingMeetings },
+                    { path: 'past', component: pastMeetings }
+                ]
+            },
+            { path: 'uikit', loadChildren: () => import('./app/pages/uikit/uikit.routes') },
             { path: 'pages', loadChildren: () => import('./app/pages/pages.routes') }
         ]
     },

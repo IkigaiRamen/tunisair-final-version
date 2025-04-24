@@ -17,6 +17,9 @@ public interface MeetingService {
     List<Meeting> getMeetingsByCreator(User user);
     List<Meeting> getMeetingsByParticipant(User user);
     List<Meeting> getMeetingsByDateRange(LocalDateTime start, LocalDateTime end);
+    List<Meeting> getUpcomingMeetings(LocalDateTime start);
+    List<Meeting> getPastMeetings(LocalDateTime start);
+
     List<Meeting> searchMeetingsByTitle(String title);
     Set<Meeting> getMeetingsByParticipantId(Long userId);
     Meeting addParticipant(Long meetingId, Long userId);

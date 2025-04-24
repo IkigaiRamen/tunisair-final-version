@@ -30,4 +30,10 @@ export class MeetingsService {
   addParticipant(meetingId: number, userId: number): Observable<Meeting> {
     return this.api.post<Meeting>(`/meetings/${meetingId}/participants?userId=${userId}`, {});
   }
+  getUpcomingMeetings(start: string): Observable<Meeting[]> {
+    return this.api.get<Meeting[]>(`/meetings/upcoming?start=${start}`);
+  }
+  getPastMeetings(start: string): Observable<Meeting[]> {
+    return this.api.get<Meeting[]>(`/meetings/past?start=${start}`);
+  }
 } 

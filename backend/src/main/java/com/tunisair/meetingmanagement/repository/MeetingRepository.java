@@ -16,4 +16,8 @@ public interface MeetingRepository extends JpaRepository<Meeting, Long> {
     List<Meeting> findByDateTimeBetween(LocalDateTime start, LocalDateTime end);
     List<Meeting> findByTitleContainingIgnoreCase(String title);
     Set<Meeting> findByParticipants_Id(Long userId);
+
+    List<Meeting> findByDateTimeAfter(LocalDateTime start);
+
+    List<Meeting> findByDateTimeBefore(LocalDateTime start);
 } 
