@@ -10,103 +10,127 @@ import { TagModule } from 'primeng/tag';
 import { Meeting } from '../../core/models/meeting.model';
 import { MeetingsService } from '../../core/services/meetings.service';
 import { RouterModule } from '@angular/router';
+
 @Component({
     selector: 'app-upcoming-meeting',
     standalone: true,
     imports: [CommonModule, DataViewModule, FormsModule, SelectButtonModule, PickListModule, OrderListModule, TagModule, ButtonModule, RouterModule],
-    template: ` <div class="flex flex-col">
-  <div class="card">
-    <div class="font-semibold text-xl">Meetings</div>
-
-    <p-dataview [value]="meetings" [layout]="layout">
-      <ng-template #header>
-        <div class="flex justify-end">
-          <p-select-button [(ngModel)]="layout" [options]="options" [allowEmpty]="false">
-            <ng-template #item let-option>
-              <i class="pi" [ngClass]="{ 'pi-bars': option === 'list', 'pi-th-large': option === 'grid' }"></i>
-            </ng-template>
-          </p-select-button>
-        </div>
-      </ng-template>
-
-      <!-- List Layout -->
-      <ng-template #list let-items>
-        <div class="flex flex-col">
-          <div *ngFor="let meeting of items; let i = index">
-            <div class="flex flex-col sm:flex-row sm:items-center p-6 gap-4" [ngClass]="{ 'border-t border-surface': i !== 0 }">
-              <div class="flex flex-col md:flex-row justify-between flex-1 gap-6">
-                <div class="flex flex-col">
-                  <div class="text-lg font-medium text-surface-900">{{ meeting.title }}</div>
-                  <div class="text-sm text-surface-600 mt-1">Scheduled: {{ meeting.dateTime | date:'medium' }}</div>
-                  <div class="text-sm mt-1"><strong>Created By:</strong> {{ meeting.createdBy.username }}</div>
-                  <div class="text-sm mt-1" *ngIf="meeting.agenda"><strong>Agenda:</strong> {{ meeting.agenda }}</div>
+    template: `
+    <div class="flex flex-col">
+        <div class="card">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold">Upcoming Meetings</h2>
+                <div class="flex gap-2">
+                    <p-select-button [(ngModel)]="layout" [options]="options" [allowEmpty]="false"
+                                   styleClass="p-button-sm">
+                        <ng-template #item let-option>
+                            <i class="pi" [ngClass]="{ 'pi-bars': option === 'list', 'pi-th-large': option === 'grid' }"></i>
+                        </ng-template>
+                    </p-select-button>
                 </div>
-                <div class="flex flex-col justify-center">
-                  <p-button 
-                    icon="pi pi-eye" 
-                    label="View Details" 
-                    styleClass="p-button-outlined p-button-sm" 
-                    [routerLink]="['/meetings', meeting.id]">
-                  </p-button>
-                </div>
-              </div>
             </div>
-          </div>
-        </div>
-      </ng-template>
 
-      <!-- Grid Layout -->
-      <ng-template #grid let-items>
-        <div class="grid grid-cols-12 gap-4">
-          <div *ngFor="let meeting of items" class="col-span-12 sm:col-span-6 lg:col-span-4 p-2">
-            <div class="p-6 border border-surface-200 bg-surface-0 rounded flex flex-col gap-4">
-              <div>
-                <div class="text-lg font-semibold">{{ meeting.title }}</div>
-                <div class="text-sm text-surface-600">Scheduled: {{ meeting.dateTime | date:'medium' }}</div>
-                <div class="text-sm"><strong>Created By:</strong> {{ meeting.createdBy.username }}</div>
-                <div class="text-sm" *ngIf="meeting.objectives"><strong>Objectives:</strong> {{ meeting.objectives }}</div>
-              </div>
-              <p-button icon="pi pi-eye" label="View Details" styleClass="p-button-outlined p-button-sm w-full"></p-button>
-            </div>
-          </div>
+            <p-dataview [value]="meetings" [layout]="layout">
+                <!-- List Layout -->
+                <ng-template #list let-items>
+                    <div class="flex flex-col">
+                        <div *ngFor="let meeting of items; let i = index">
+                            <div class="flex flex-col sm:flex-row sm:items-center p-6 gap-4 border-b border-surface-200 last:border-0"
+                                 [ngClass]="{ 'bg-surface-50': i % 2 === 0 }">
+                                <div class="flex flex-col md:flex-row justify-between flex-1 gap-6">
+                                    <div class="flex flex-col">
+                                        <div class="text-lg font-semibold text-surface-900">{{ meeting.title }}</div>
+                                        <div class="text-sm text-surface-600 mt-1">
+                                            <i class="pi pi-calendar mr-2"></i>
+                                            {{ meeting.dateTime | date:'medium' }}
+                                        </div>
+                                        <div class="text-sm mt-2">
+                                            <i class="pi pi-user mr-2"></i>
+                                            <span class="font-medium">Created By:</span> {{ meeting.createdBy.fullName }}
+                                        </div>
+                                        <div class="text-sm mt-2" *ngIf="meeting.agenda">
+                                            <i class="pi pi-list mr-2"></i>
+                                            <span class="font-medium">Agenda:</span> {{ meeting.agenda }}
+                                        </div>
+                                    </div>
+                                    <div class="flex flex-col justify-center">
+                                        <p-button icon="pi pi-eye" label="View Details" 
+                                                  styleClass="p-button-outlined p-button-sm" 
+                                                  [routerLink]="['/meetings', meeting.id]" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </ng-template>
+
+                <!-- Grid Layout -->
+                <ng-template #grid let-items>
+                    <div class="grid grid-cols-12 gap-4">
+                        <div *ngFor="let meeting of items" class="col-span-12 sm:col-span-6 lg:col-span-4">
+                            <div class="p-6 border border-surface-200 bg-surface-0 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-300">
+                                <div class="flex flex-col gap-4">
+                                    <div>
+                                        <div class="text-lg font-semibold text-surface-900">{{ meeting.title }}</div>
+                                        <div class="text-sm text-surface-600 mt-2">
+                                            <i class="pi pi-calendar mr-2"></i>
+                                            {{ meeting.dateTime | date:'medium' }}
+                                        </div>
+                                        <div class="text-sm mt-2">
+                                            <i class="pi pi-user mr-2"></i>
+                                            <span class="font-medium">Created By:</span> {{ meeting.createdBy.fullName }}
+                                        </div>
+                                        <div class="text-sm mt-2" *ngIf="meeting.objectives">
+                                            <i class="pi pi-list mr-2"></i>
+                                            <span class="font-medium">Objectives:</span> {{ meeting.objectives }}
+                                        </div>
+                                    </div>
+                                    <div class="flex justify-end mt-4">
+                                        <p-button icon="pi pi-eye" label="View Details" 
+                                                  styleClass="p-button-outlined p-button-sm w-full" 
+                                                  [routerLink]="['/meetings', meeting.id]" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </ng-template>
+            </p-dataview>
         </div>
-      </ng-template>
-    </p-dataview>
-  </div>
-</div>
-`,
-    styles: `
-        ::ng-deep {
-            .p-orderlist-list-container {
-                width: 100%;
+    </div>
+    `,
+    styles: [`
+        :host ::ng-deep {
+            .p-dataview {
+                .p-dataview-content {
+                    background: transparent;
+                }
+            }
+            .p-selectbutton {
+                .p-button {
+                    padding: 0.5rem;
+                }
             }
         }
-    `,
+    `],
     providers: [MeetingsService]
 })
 export class upcomingMeetings {
-    
     layout: 'list' | 'grid' = 'list';
-
     options = ['list', 'grid'];
-
     meetings: Meeting[] = [];
-
-   
 
     constructor(private meetingsService: MeetingsService) {}
 
     ngOnInit(): void {
-        // Get current datetime in ISO format
-    const start = new Date().toISOString();    
-        // Call the service method to fetch upcoming meetings
+        const start = new Date().toISOString();    
         this.meetingsService.getUpcomingMeetings(start).subscribe(
-          (meetings: Meeting[]) => {  // Explicitly define meetings as an array of Meeting
-            this.meetings = meetings;
-          },
-          (error: any) => {  // Explicitly define error as any (you can specify a more detailed type if needed)
-            console.error('Error fetching upcoming meetings:', error);
-          }
+            (meetings: Meeting[]) => {
+                this.meetings = meetings;
+            },
+            (error: any) => {
+                console.error('Error fetching upcoming meetings:', error);
+            }
         );
-      }
     }
+}

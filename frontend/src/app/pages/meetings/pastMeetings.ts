@@ -5,34 +5,80 @@ import { CommonModule } from '@angular/common';
 import { ButtonModule } from 'primeng/button';
 import { MeetingsService } from '../../core/services/meetings.service';
 import { Meeting } from '../../core/models/meeting.model';
+import { RouterModule } from '@angular/router';
 
 @Component({
     selector: 'app-past-meetings',
     standalone: true,
-    imports: [CommonModule, TimelineModule, ButtonModule, CardModule],
+    imports: [CommonModule, TimelineModule, ButtonModule, CardModule, RouterModule],
     template: `
     <div class="grid grid-cols-12 gap-8">
         <div class="col-span-full">
             <div class="card">
-                <div class="font-semibold text-xl mb-4">Past Meetings Timeline</div>
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold">Past Meetings Timeline</h2>
+                </div>
                 <p-timeline [value]="meetings" align="alternate" styleClass="customized-timeline">
                     <ng-template #marker let-meeting>
-                        <span class="flex w-8 h-8 items-center justify-center text-white rounded-full z-10 shadow-sm bg-blue-500">
-                            <i class="pi pi-calendar"></i>
+                        <span class="flex w-10 h-10 items-center justify-center text-white rounded-full z-10 shadow-md bg-primary">
+                            <i class="pi pi-calendar text-lg"></i>
                         </span>
                     </ng-template>
                     <ng-template #content let-meeting>
-                        <p-card [header]="meeting.title" [subheader]="formatDate(meeting.dateTime)">
-                            <p><strong>Agenda:</strong> {{ meeting.agenda }}</p>
-                            <p><strong>Objectives:</strong> {{ meeting.objectives }}</p>
-                            <p-button label="Details" [text]="true" />
-                        </p-card>
+                        <div class="p-4">
+                            <p-card [header]="meeting.title" [subheader]="formatDate(meeting.dateTime)" 
+                                   styleClass="shadow-md hover:shadow-lg transition-shadow duration-300">
+                                <div class="flex flex-col gap-4">
+                                    <div *ngIf="meeting.agenda" class="field">
+                                        <label class="font-bold text-sm text-surface-600">Agenda:</label>
+                                        <p class="mt-1">{{ meeting.agenda }}</p>
+                                    </div>
+                                    <div *ngIf="meeting.objectives" class="field">
+                                        <label class="font-bold text-sm text-surface-600">Objectives:</label>
+                                        <p class="mt-1">{{ meeting.objectives }}</p>
+                                    </div>
+                                    <div class="field">
+                                        <label class="font-bold text-sm text-surface-600">Created By:</label>
+                                        <p class="mt-1">{{ meeting.createdBy?.fullName }}</p>
+                                    </div>
+                                    <div class="field">
+                                        <label class="font-bold text-sm text-surface-600">Participants:</label>
+                                        <div class="flex flex-wrap gap-2 mt-1">
+                                            <span *ngFor="let participant of meeting.participants" 
+                                                  class="px-2 py-1 bg-surface-100 rounded-full text-sm">
+                                                {{ participant.fullName }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div class="flex justify-end mt-4">
+                                        <p-button label="View Details" icon="pi pi-eye" 
+                                                  [routerLink]="['/meetings', meeting.id]"
+                                                  styleClass="p-button-sm" />
+                                    </div>
+                                </div>
+                            </p-card>
+                        </div>
                     </ng-template>
                 </p-timeline>
             </div>
         </div>
     </div>
     `,
+    styles: [`
+        :host ::ng-deep {
+            .customized-timeline {
+                .p-timeline-event-content {
+                    line-height: 1;
+                }
+                .p-timeline-event-opposite {
+                    display: none;
+                }
+                .p-timeline-event-connector {
+                    background-color: var(--surface-200);
+                }
+            }
+        }
+    `],
     providers: [MeetingsService]
 })
 export class pastMeetings {
@@ -41,7 +87,7 @@ export class pastMeetings {
     constructor(private meetingsService: MeetingsService) {}
 
     ngOnInit(): void {
-        const start = new Date().toISOString();
+        const start = new Date().toISOString();    
         this.meetingsService.getPastMeetings(start).subscribe(
             (meetings: Meeting[]) => {
                 this.meetings = meetings;
@@ -54,6 +100,13 @@ export class pastMeetings {
 
     formatDate(dateTime: string): string {
         const date = new Date(dateTime);
-        return date.toLocaleString(); // Adjust formatting as needed
+        return date.toLocaleString('en-US', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
     }
 }
