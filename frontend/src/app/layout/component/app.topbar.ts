@@ -1,12 +1,13 @@
 import { Component, ViewChild } from '@angular/core';
 import { MenuItem } from 'primeng/api';
-import { RouterModule } from '@angular/router';
+import { RouterModule, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { StyleClassModule } from 'primeng/styleclass';
 import { MenuModule } from 'primeng/menu';
 import { AppConfigurator } from './app.configurator';
 import { LayoutService } from '../service/layout.service';
 import { MeetingCalendarComponent } from '../../components/meeting-calendar/meeting-calendar.component';
+import { AuthService } from '../../core/services/auth.service';
 
 @Component({
     selector: 'app-topbar',
@@ -85,15 +86,19 @@ export class AppTopbar {
         }
     ];
 
-    constructor(public layoutService: LayoutService) {}
+    constructor(
+        public layoutService: LayoutService,
+        private authService: AuthService,
+        private router: Router
+    ) {}
 
     toggleDarkMode() {
         this.layoutService.layoutConfig.update((state) => ({ ...state, darkTheme: !state.darkTheme }));
     }
 
     logout() {
-        // Implement your logout logic here
-        console.log('Logout clicked');
+        this.authService.logout();
+        this.router.navigate(['/auth/login']);
     }
 
     showCalendar() {
