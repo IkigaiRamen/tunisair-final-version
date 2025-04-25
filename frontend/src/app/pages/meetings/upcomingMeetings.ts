@@ -9,10 +9,11 @@ import { SelectButtonModule } from 'primeng/selectbutton';
 import { TagModule } from 'primeng/tag';
 import { Meeting } from '../../core/models/meeting.model';
 import { MeetingsService } from '../../core/services/meetings.service';
+import { RouterModule } from '@angular/router';
 @Component({
     selector: 'app-upcoming-meeting',
     standalone: true,
-    imports: [CommonModule, DataViewModule, FormsModule, SelectButtonModule, PickListModule, OrderListModule, TagModule, ButtonModule],
+    imports: [CommonModule, DataViewModule, FormsModule, SelectButtonModule, PickListModule, OrderListModule, TagModule, ButtonModule, RouterModule],
     template: ` <div class="flex flex-col">
   <div class="card">
     <div class="font-semibold text-xl">Meetings</div>
@@ -41,7 +42,12 @@ import { MeetingsService } from '../../core/services/meetings.service';
                   <div class="text-sm mt-1" *ngIf="meeting.agenda"><strong>Agenda:</strong> {{ meeting.agenda }}</div>
                 </div>
                 <div class="flex flex-col justify-center">
-                  <p-button icon="pi pi-eye" label="View Details" styleClass="p-button-outlined p-button-sm"></p-button>
+                  <p-button 
+                    icon="pi pi-eye" 
+                    label="View Details" 
+                    styleClass="p-button-outlined p-button-sm" 
+                    [routerLink]="['/meetings', meeting.id]">
+                  </p-button>
                 </div>
               </div>
             </div>

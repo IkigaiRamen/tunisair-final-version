@@ -8,6 +8,7 @@ import { Notfound } from './app/pages/notfound/notfound';
 import { meetings } from './app/pages/meetings/meetings';
 import { upcomingMeetings } from './app/pages/meetings/upcomingMeetings';
 import { pastMeetings } from './app/pages/meetings/pastMeetings';
+import { MeetingDetailsComponent } from './app/pages/meetings/meetingDetails';
 
 export const appRoutes: Routes = [
     {
@@ -21,7 +22,8 @@ export const appRoutes: Routes = [
                 children: [
                     { path: 'new', component: meetings },
                     { path: 'upcoming', component: upcomingMeetings },
-                    { path: 'past', component: pastMeetings }
+                    { path: 'past', component: pastMeetings },
+                    { path: ':id', component: MeetingDetailsComponent }
                 ]
             },
             { path: 'uikit', loadChildren: () => import('./app/pages/uikit/uikit.routes') },
