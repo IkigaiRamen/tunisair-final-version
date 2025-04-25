@@ -63,146 +63,131 @@ interface ExportColumn {
         CalendarModule,
     ],
     template: `
-        <p-toolbar styleClass="mb-6">
-            <ng-template #start>
-                <p-button label="New" icon="pi pi-plus" severity="secondary" class="mr-2" (onClick)="openNew()" />
-                <p-button severity="secondary" label="Delete" icon="pi pi-trash" outlined (onClick)="deleteSelectedMeetings()" [disabled]="!selectedMeetings || !selectedMeetings.length" />
-            </ng-template>
+        <p-toast></p-toast>
+        <div class="grid grid-cols-12 gap-8">
+            <div class="col-span-full">
+                <div class="card">
+                    <p-toolbar styleClass="mb-6 border-none">
+                        <ng-template #start>
+                            <div class="flex gap-2">
+                                <p-button label="New Meeting" icon="pi pi-plus" severity="secondary" (onClick)="openNew()" />
+                                <p-button severity="danger" label="Delete Selected" icon="pi pi-trash" outlined (onClick)="deleteSelectedMeetings()" 
+                                         [disabled]="!selectedMeetings || !selectedMeetings.length" />
+                            </div>
+                        </ng-template>
 
-            <ng-template #end>
-                <p-button label="Export" icon="pi pi-upload" severity="secondary" (onClick)="exportCSV()" />
-            </ng-template>
-        </p-toolbar>
+                        <ng-template #end>
+                            <p-button label="Export" icon="pi pi-upload" severity="secondary" (onClick)="exportCSV()" />
+                        </ng-template>
+                    </p-toolbar>
 
-        <p-table
-            #dt
-            [value]="meetings()"
-            [rows]="10"
-            [columns]="cols"
-            [paginator]="true"
-            [globalFilterFields]="['title', 'createdBy.fullName']"
-            [tableStyle]="{ 'min-width': '75rem' }"
-            [(selection)]="selectedMeetings"
-            [rowHover]="true"
-            dataKey="id"
-            [rowsPerPageOptions]="[10, 20, 30]"
-        >
-            <ng-template #caption>
-                <div class="flex items-center justify-between">
-                    <h5 class="m-0">Manage Meetings</h5>
-                    <p-iconfield>
-                        <p-inputicon styleClass="pi pi-search" />
-                        <input pInputText type="text" (input)="onGlobalFilter(dt, $event)" placeholder="Search..." />
-                    </p-iconfield>
+                    <p-table #dt [value]="meetings()" [rows]="10" [columns]="cols" [paginator]="true"
+                            [globalFilterFields]="['title', 'createdBy.fullName']" [tableStyle]="{ 'min-width': '75rem' }"
+                            [(selection)]="selectedMeetings" [rowHover]="true" dataKey="id" [rowsPerPageOptions]="[10, 20, 30]"
+                            styleClass="p-datatable-sm">
+                        <ng-template #caption>
+                            <div class="flex items-center justify-between">
+                                <h5 class="text-xl font-semibold m-0">Manage Meetings</h5>
+                                <p-iconfield>
+                                    <p-inputicon styleClass="pi pi-search" />
+                                    <input pInputText type="text" (input)="onGlobalFilter(dt, $event)" 
+                                           placeholder="Search meetings..." class="p-inputtext-sm" />
+                                </p-iconfield>
+                            </div>
+                        </ng-template>
+                        <ng-template #header>
+                            <tr>
+                                <th style="width: 3rem">
+                                    <p-tableHeaderCheckbox />
+                                </th>
+                                <th pSortableColumn="Title" style="min-width:16rem">
+                                    Title <p-sortIcon field="Title" />
+                                </th>
+                                <th pSortableColumn="dateTime" style="min-width:16rem">
+                                    Date <p-sortIcon field="dateTime" />
+                                </th>
+                                <th pSortableColumn="Created By" style="min-width:10rem">
+                                    Created By <p-sortIcon field="Created By" />
+                                </th>
+                                <th pSortableColumn="Participants" style="min-width: 12rem">
+                                    Participants <p-sortIcon field="Participants" />
+                                </th>
+                                <th style="min-width: 8rem">Actions</th>
+                            </tr>
+                        </ng-template>
+                        <ng-template #body let-meeting>
+                            <tr>
+                                <td style="width: 3rem">
+                                    <p-tableCheckbox [value]="meeting" />
+                                </td>
+                                <td class="font-medium">{{ meeting.title }}</td>
+                                <td>{{ meeting.dateTime | date: 'medium' }}</td>
+                                <td>{{ meeting.createdBy?.fullName || 'N/A' }}</td>
+                                <td>
+                                    <div class="flex flex-wrap gap-1">
+                                        <p-tag *ngFor="let p of meeting.participants" 
+                                               [value]="p.fullName" 
+                                               severity="info" 
+                                               styleClass="text-xs" />
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="flex gap-2">
+                                        <p-button icon="pi pi-pencil" class="p-button-sm" [rounded]="true" [outlined]="true" 
+                                                  (click)="editMeeting(meeting)" />
+                                        <p-button icon="pi pi-trash" severity="danger" class="p-button-sm" [rounded]="true" [outlined]="true" 
+                                                  (click)="deleteMeeting(meeting)" />
+                                    </div>
+                                </td>
+                            </tr>
+                        </ng-template>
+                    </p-table>
                 </div>
-            </ng-template>
-            <ng-template #header>
-                <tr>
-                    <th style="width: 3rem">
-                        <p-tableHeaderCheckbox />
-                    </th>
-                    <th pSortableColumn="Title" style="min-width:16rem">
-                        Title
-                        <p-sortIcon field="Title" />
-                    </th>
-                       <th pSortableColumn="dateTime" style="min-width:16rem">
-                        Date
-                        <p-sortIcon field="dateTime" />
-                    </th>
-                  
-                    <th pSortableColumn="Created By" style="min-width:10rem">
-                        Created By
-                        <p-sortIcon field="Created By" />
-                    </th>
-                    <th pSortableColumn="Participants" style="min-width: 12rem">
-                        Participants
-                        <p-sortIcon field="Participants" />
-                    </th>
-                    <th style="min-width: 12rem">Actions</th>
-                    <th style="min-width: 12rem"></th>
-                </tr>
-            </ng-template>
-            <ng-template #body let-meeting>
-                <tr>
-                    <td style="width: 3rem">
-                        <p-tableCheckbox [value]="meeting" />
-                    </td>
-                    <td style="min-width: 12rem">{{ meeting.title }}</td>
-                    <td style="min-width: 16rem">{{ meeting.dateTime | date: 'medium' }}</td>
-                      <td>{{ meeting.createdBy?.fullName || 'N/A' }}</td>
-                      <td style="min-width: 16rem">
-                        <span *ngFor="let p of meeting.participants" class="mr-2">
-                            <p-tag [value]="p.fullName" severity="info" />
-                        </span>
-                    </td>
-                    
+            </div>
+        </div>
 
-                  
-                    
-                    <td>
-                        <p-button icon="pi pi-pencil" class="mr-2" [rounded]="true" [outlined]="true" (click)="editMeeting(meeting)" />
-                        <p-button icon="pi pi-trash" severity="danger" [rounded]="true" [outlined]="true" (click)="deleteMeeting(meeting)" />
-                    </td>
-                </tr>
-            </ng-template>
-        </p-table>
-
-        <p-dialog [(visible)]="meetingDialog" [style]="{ width: '450px' }" header="Meeting Details" [modal]="true">
+        <p-dialog [(visible)]="meetingDialog" [style]="{ width: '600px' }" header="Meeting Details" [modal]="true" 
+                  [draggable]="false" [resizable]="false" styleClass="p-fluid">
             <ng-template #content>
                 <div class="flex flex-col gap-6">
-                    <div>
-                        <label for="title" class="block font-bold mb-3">Title</label>
-                        <input type="text" pInputText id="title" [(ngModel)]="meeting.title" required autofocus fluid />
-
+                    <div class="field">
+                        <label for="title" class="block font-bold mb-2">Title</label>
+                        <input type="text" pInputText id="title" [(ngModel)]="meeting.title" required autofocus />
                         <small class="text-red-500" *ngIf="submitted && !meeting.title">Title is required.</small>
                     </div>
 
-                    <div>
+                    <div class="field">
                         <label for="agenda" class="block font-bold mb-2">Agenda</label>
-                        <textarea pTextarea id="agenda"  [(ngModel)]="meeting.agenda" required rows="3" cols="20" fluid></textarea>
+                        <textarea pTextarea id="agenda" [(ngModel)]="meeting.agenda" required rows="3" 
+                                  placeholder="Enter meeting agenda..."></textarea>
                     </div>
 
-                    <div>
+                    <div class="field">
                         <label for="objectives" class="block font-bold mb-2">Objectives</label>
-                        <textarea pTextarea id="objectives" rows="3" [(ngModel)]="meeting.objectives"required rows="3" cols="20" fluid></textarea>
+                        <textarea pTextarea id="objectives" [(ngModel)]="meeting.objectives" required rows="3" 
+                                  placeholder="Enter meeting objectives..."></textarea>
                     </div>
-<div>
-  <label for="dateTime" class="block font-bold mb-2">Date & Time</label>
-  <p-calendar
-    [(ngModel)]="meeting.dateTime"
-    [showTime]="true"
-    hourFormat="24"
-    dateFormat="yy-mm-dd"
-    [showIcon]="true"
-    class="w-full"
-  fluid></p-calendar>
-</div>
 
+                    <div class="field">
+                        <label for="dateTime" class="block font-bold mb-2">Date & Time</label>
+                        <p-calendar [(ngModel)]="meeting.dateTime" [showTime]="true" hourFormat="24" 
+                                   dateFormat="yy-mm-dd" [showIcon]="true" class="w-full" />
+                    </div>
 
-                    <div>
+                    <div class="field">
                         <label for="participants" class="block font-bold mb-2">Participants</label>
-                        <p-multiSelect [options]="userList" [(ngModel)]="meeting.participants" optionLabel="fullName" placeholder="Select Participants" display="chip" class="w-full" />
-                    </div>
-
-                    <div>
-                        <label class="block font-bold mb-2">Documents</label>
-                        <!-- Add file upload or list logic as needed -->
-                        <p-tag *ngFor="let doc of meeting.documents" [value]="doc.name" class="mr-2 mb-2" />
-                    </div>
-
-                    <div>
-                        <label class="block font-bold mb-2">Decisions</label>
-                        <!-- Simple decision display -->
-                        <ul class="list-disc list-inside">
-                            <li *ngFor="let decision of meeting.decisions">{{ decision.content }}</li>
-                        </ul>
+                        <p-multiSelect [options]="userList" [(ngModel)]="meeting.participants" 
+                                     optionLabel="fullName" placeholder="Select Participants" 
+                                     display="chip" class="w-full" />
                     </div>
                 </div>
             </ng-template>
 
             <ng-template #footer>
-                <p-button label="Cancel" icon="pi pi-times" text (click)="hideDialog()" />
-                <p-button label="Save" icon="pi pi-check" (click)="saveMeeting()" />
+                <div class="flex justify-end gap-2">
+                    <p-button label="Cancel" icon="pi pi-times" text (click)="hideDialog()" />
+                    <p-button label="Save" icon="pi pi-check" (click)="saveMeeting()" />
+                </div>
             </ng-template>
         </p-dialog>
 

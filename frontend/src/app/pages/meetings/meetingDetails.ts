@@ -13,16 +13,20 @@ import { TextareaModule } from 'primeng/textarea';
 import { CalendarModule } from 'primeng/calendar';
 import { MultiSelectModule } from 'primeng/multiselect';
 import { ToastModule } from 'primeng/toast';
+import { FileUploadModule } from 'primeng/fileupload';
 import { MessageService } from 'primeng/api';
 import { Meeting } from '../../core/models/meeting.model';
 import { Decision } from '../../core/models/decision.model';
 import { Task } from '../../core/models/task.model';
 import { User } from '../../core/models/user.model';
+import { Document } from '../../core/models/document.model';
 import { MeetingsService } from '../../core/services/meetings.service';
 import { DecisionsService } from '../../core/services/decisions.service';
 import { TasksService } from '../../core/services/tasks.service';
 import { UsersService } from '../../core/services/users.service';
+import { DocumentsService } from '../../core/services/documents.service';
 import { SelectModule } from 'primeng/select';
+
 @Component({
     selector: 'app-meeting-details',
     standalone: true,
@@ -40,6 +44,7 @@ import { SelectModule } from 'primeng/select';
         CalendarModule,
         MultiSelectModule,
         ToastModule,
+        FileUploadModule,
         SelectModule
     ],
     template: `
@@ -89,6 +94,53 @@ import { SelectModule } from 'primeng/select';
                                     </div>
                                 </div>
                             </div>
+                        </p-tabPanel>
+
+                        <!-- Documents Tab -->
+                        <p-tabPanel header="Documents">
+                            <div class="mb-4">
+                                <p-fileupload #fu mode="advanced" [multiple]="true" accept="*/*" maxFileSize="10000000"
+                                            [customUpload]="true" (uploadHandler)="uploadDocument($event)"
+                                            chooseLabel="Choose Files" uploadLabel="Upload" cancelLabel="Cancel"
+                                            [showUploadButton]="true" [showCancelButton]="true">
+                                    <ng-template #empty>
+                                        <div class="flex align-items-center justify-content-center">
+                                            <i class="pi pi-file mr-2"></i>
+                                            <span>Drag and drop files to here to upload.</span>
+                                        </div>
+                                    </ng-template>
+                                </p-fileupload>
+                            </div>
+
+                            <p-table [value]="documents" [paginator]="true" [rows]="10" [showCurrentPageReport]="true"
+                                    currentPageReportTemplate="Showing {first} to {last} of {totalRecords} documents"
+                                    [rowsPerPageOptions]="[10,25,50]">
+                                <ng-template pTemplate="header">
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Type</th>
+                                        <th>Size</th>
+                                        <th>Uploaded By</th>
+                                        <th>Upload Date</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </ng-template>
+                                <ng-template pTemplate="body" let-document>
+                                    <tr>
+                                        <td>{{ document.name }}</td>
+                                        <td>{{ document.type }}</td>
+                                        <td>{{ document.size }}</td>
+                                        <td>{{ document.uploadedBy?.fullName }}</td>
+                                        <td>{{ document.createdAt | date:'medium' }}</td>
+                                        <td>
+                                            <p-button icon="pi pi-download" [rounded]="true" [outlined]="true" 
+                                                      (onClick)="downloadDocument(document)" />
+                                            <p-button icon="pi pi-trash" severity="danger" [rounded]="true" [outlined]="true" 
+                                                      (onClick)="deleteDocument(document)" />
+                                        </td>
+                                    </tr>
+                                </ng-template>
+                            </p-table>
                         </p-tabPanel>
 
                         <!-- Decisions Tab -->
@@ -216,12 +268,13 @@ import { SelectModule } from 'primeng/select';
 
         <p-toast></p-toast>
     `,
-    providers: [MessageService, MeetingsService, DecisionsService, TasksService, UsersService]
+    providers: [MessageService, MeetingsService, DecisionsService, TasksService, UsersService, DocumentsService]
 })
 export class MeetingDetailsComponent implements OnInit {
     meeting: Meeting | null = null;
     decisions: Decision[] = [];
     tasks: Task[] = [];
+    documents: Document[] = [];
     userList: User[] = [];
 
     // Dialog states
@@ -246,6 +299,7 @@ export class MeetingDetailsComponent implements OnInit {
         private decisionsService: DecisionsService,
         private tasksService: TasksService,
         private usersService: UsersService,
+        private documentsService: DocumentsService,
         private messageService: MessageService
     ) {}
 
@@ -254,6 +308,7 @@ export class MeetingDetailsComponent implements OnInit {
         if (meetingId) {
             this.loadMeetingDetails(meetingId);
             this.loadDecisions(meetingId);
+            this.loadDocuments(meetingId);
             this.loadUsers();
         }
     }
@@ -288,7 +343,20 @@ export class MeetingDetailsComponent implements OnInit {
         });
     }
 
-   
+    loadDocuments(meetingId: number) {
+        this.documentsService.list(meetingId).subscribe({
+            next: (documents) => {
+                this.documents = documents;
+            },
+            error: (error) => {
+                this.messageService.add({
+                    severity: 'error',
+                    summary: 'Error',
+                    detail: 'Failed to load documents'
+                });
+            }
+        });
+    }
 
     loadUsers() {
         this.usersService.getAll().subscribe({
@@ -300,6 +368,73 @@ export class MeetingDetailsComponent implements OnInit {
                     severity: 'error',
                     summary: 'Error',
                     detail: 'Failed to load users'
+                });
+            }
+        });
+    }
+
+    // Document methods
+    uploadDocument(event: any) {
+        const formData = new FormData();
+        for (const file of event.files) {
+            formData.append('file', file);
+        }
+        formData.append('meetingId', this.meeting?.id.toString() || '');
+
+        this.documentsService.upload(formData).subscribe({
+            next: (document) => {
+                this.documents.push(document);
+                this.messageService.add({
+                    severity: 'success',
+                    summary: 'Success',
+                    detail: 'Document uploaded successfully'
+                });
+            },
+            error: (error) => {
+                this.messageService.add({
+                    severity: 'error',
+                    summary: 'Error',
+                    detail: 'Failed to upload document'
+                });
+            }
+        });
+    }
+
+    downloadDocument(doc: Document) {
+        this.documentsService.download(doc.id).subscribe({
+            next: (blob) => {
+                const url = window.URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = doc.name;
+                link.click();
+                window.URL.revokeObjectURL(url);
+            },
+            error: (error) => {
+                this.messageService.add({
+                    severity: 'error',
+                    summary: 'Error',
+                    detail: 'Failed to download document'
+                });
+            }
+        });
+    }
+
+    deleteDocument(document: Document) {
+        this.documentsService.delete(document.id).subscribe({
+            next: () => {
+                this.documents = this.documents.filter(d => d.id !== document.id);
+                this.messageService.add({
+                    severity: 'success',
+                    summary: 'Success',
+                    detail: 'Document deleted successfully'
+                });
+            },
+            error: (error) => {
+                this.messageService.add({
+                    severity: 'error',
+                    summary: 'Error',
+                    detail: 'Failed to delete document'
                 });
             }
         });
@@ -490,7 +625,6 @@ export class MeetingDetailsComponent implements OnInit {
                 return 'info';
         }
     }
-    
 
     editMeeting() {
         // Navigate to edit meeting page
