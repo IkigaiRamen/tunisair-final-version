@@ -4,6 +4,8 @@ import { Dashboard } from './app/pages/dashboard/dashboard';
 import { Documentation } from './app/pages/documentation/documentation';
 import { Landing } from './app/pages/landing/landing';
 import { Notfound } from './app/pages/notfound/notfound';
+import { AuthGuard } from './app/core/guards/auth.guard';
+import { ProfileComponent } from './app/pages/profile/profile.component';
 
 import { meetings } from './app/pages/meetings/meetings';
 import { upcomingMeetings } from './app/pages/meetings/upcomingMeetings';
@@ -21,9 +23,11 @@ export const appRoutes: Routes = [
     {
         path: '',
         component: AppLayout,
+        canActivate: [AuthGuard],
         children: [
             { path: '', component: Dashboard },
             { path: 'documentation', component: Documentation },
+            { path: 'profile', component: ProfileComponent },
             {
                 path: 'meetings',
                 children: [
@@ -62,7 +66,7 @@ export const appRoutes: Routes = [
     { path: 'landing', component: Landing },
     { path: 'notfound', component: Notfound },
     { path: 'auth', loadChildren: () => import('./app/pages/auth/auth.routes') },
-    { path: '**', redirectTo: '/notfound' }
+    { path: '**', redirectTo: '/auth/login' }
 ];
 
 
