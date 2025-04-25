@@ -1,15 +1,17 @@
-import { Component } from '@angular/core';
+import { Component, ViewChild } from '@angular/core';
 import { MenuItem } from 'primeng/api';
 import { RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { StyleClassModule } from 'primeng/styleclass';
+import { MenuModule } from 'primeng/menu';
 import { AppConfigurator } from './app.configurator';
 import { LayoutService } from '../service/layout.service';
+import { MeetingCalendarComponent } from '../../components/meeting-calendar/meeting-calendar.component';
 
 @Component({
     selector: 'app-topbar',
     standalone: true,
-    imports: [RouterModule, CommonModule, StyleClassModule, AppConfigurator],
+    imports: [RouterModule, CommonModule, StyleClassModule, AppConfigurator, MenuModule, MeetingCalendarComponent],
     template: ` <div class="layout-topbar">
         <div class="layout-topbar-logo-container">
             <button class="layout-menu-button layout-topbar-action" (click)="layoutService.onMenuToggle()">
@@ -64,7 +66,7 @@ import { LayoutService } from '../service/layout.service';
 
             <div class="layout-topbar-menu hidden lg:block">
                 <div class="layout-topbar-menu-content">
-                    <button type="button" class="layout-topbar-action">
+                    <button type="button" class="layout-topbar-action" (click)="showCalendar()">
                         <i class="pi pi-calendar"></i>
                         <span>Calendar</span>
                     </button>
@@ -72,21 +74,46 @@ import { LayoutService } from '../service/layout.service';
                         <i class="pi pi-inbox"></i>
                         <span>Messages</span>
                     </button>
-                    <button type="button" class="layout-topbar-action">
+                    <button type="button" class="layout-topbar-action" (click)="menu.toggle($event)">
                         <i class="pi pi-user"></i>
                         <span>Profile</span>
                     </button>
+                    <p-menu #menu [popup]="true" [model]="userMenuItems"></p-menu>
                 </div>
             </div>
         </div>
-    </div>`
+    </div>
+    <app-meeting-calendar #calendar></app-meeting-calendar>
+    `
 })
 export class AppTopbar {
-    items!: MenuItem[];
+    @ViewChild('calendar') calendar!: MeetingCalendarComponent;
+    
+    userMenuItems: MenuItem[] = [
+        {
+            label: 'Profile',
+            icon: 'pi pi-user',
+            routerLink: '/profile'
+        },
+        {
+            label: 'Logout',
+            icon: 'pi pi-sign-out',
+            command: () => this.logout()
+        }
+    ];
 
     constructor(public layoutService: LayoutService) {}
 
     toggleDarkMode() {
         this.layoutService.layoutConfig.update((state) => ({ ...state, darkTheme: !state.darkTheme }));
+    }
+
+    logout() {
+        // Implement your logout logic here
+        console.log('Logout clicked');
+    }
+
+    showCalendar() {
+        this.calendar.show();
     }
 }
