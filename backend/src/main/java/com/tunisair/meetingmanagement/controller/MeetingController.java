@@ -47,13 +47,13 @@ public class MeetingController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("isAuthenticated() and @meetingService.getMeetingById(#id).get().creator.id == authentication.principal.id")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SECRETARY') or @meetingService.getMeetingById(#id).get().createdBy.id == authentication.principal.id")
     public ResponseEntity<Meeting> updateMeeting(@PathVariable Long id, @Valid @RequestBody Meeting meetingDetails) {
         return ResponseEntity.ok(meetingService.updateMeeting(id, meetingDetails));
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("isAuthenticated() and @meetingService.getMeetingById(#id).get().creator.id == authentication.principal.id")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SECRETARY') or @meetingService.getMeetingById(#id).get().createdBy.id == authentication.principal.id")
     public ResponseEntity<Void> deleteMeeting(@PathVariable Long id) {
         meetingService.deleteMeeting(id);
         return ResponseEntity.ok().build();
@@ -80,12 +80,14 @@ public class MeetingController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end) {
         return ResponseEntity.ok(meetingService.getMeetingsByDateRange(start, end));
     }
+
     @GetMapping("/past")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<List<Meeting>> getPastMeetings(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start) {
         return ResponseEntity.ok(meetingService.getPastMeetings(start));
     }
+
     @GetMapping("/upcoming")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<List<Meeting>> getUpcomingMeetings(
@@ -110,4 +112,4 @@ public class MeetingController {
     public ResponseEntity<Meeting> removeParticipant(@PathVariable Long meetingId, @PathVariable Long userId) {
         return ResponseEntity.ok(meetingService.removeParticipant(meetingId, userId));
     }
-} 
+}

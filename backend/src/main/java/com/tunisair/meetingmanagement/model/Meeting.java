@@ -35,20 +35,21 @@ public class Meeting {
     private LocalDateTime dateTime;
 
     @NotNull
-    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+    @JsonIgnoreProperties({ "hibernateLazyInitializer", "handler", "password", "roles" })
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "created_by_id", nullable = false)
     private User createdBy;
 
-    @ManyToMany
-    @JoinTable(name = "meeting_participants",
-            joinColumns = @JoinColumn(name = "meeting_id"),
-            inverseJoinColumns = @JoinColumn(name = "user_id"))
+    @JsonIgnoreProperties({ "hibernateLazyInitializer", "handler", "password", "roles" })
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(name = "meeting_participants", joinColumns = @JoinColumn(name = "meeting_id"), inverseJoinColumns = @JoinColumn(name = "user_id"))
     private Set<User> participants = new HashSet<>();
 
+    @JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
     @OneToMany(mappedBy = "meeting", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<Document> documents = new HashSet<>();
 
+    @JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
     @OneToMany(mappedBy = "meeting", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<Decision> decisions = new HashSet<>();
 
@@ -59,4 +60,4 @@ public class Meeting {
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
     }
-} 
+}

@@ -152,34 +152,40 @@ interface ExportColumn {
                 <div class="flex flex-col gap-6">
                     <div class="field">
                         <label for="title" class="block font-bold mb-2">Title</label>
-                        <input type="text" pInputText id="title" [(ngModel)]="meeting.title" required autofocus />
+                        <input type="text" pInputText fluid id="title" [(ngModel)]="meeting.title" required autofocus />
                         <small class="text-red-500" *ngIf="submitted && !meeting.title">Title is required.</small>
                     </div>
 
                     <div class="field">
                         <label for="agenda" class="block font-bold mb-2">Agenda</label>
-                        <textarea pTextarea id="agenda" [(ngModel)]="meeting.agenda" required rows="3" 
+                        <textarea pTextarea fluid id="agenda" [(ngModel)]="meeting.agenda" required rows="3" 
                                   placeholder="Enter meeting agenda..."></textarea>
                     </div>
 
                     <div class="field">
                         <label for="objectives" class="block font-bold mb-2">Objectives</label>
-                        <textarea pTextarea id="objectives" [(ngModel)]="meeting.objectives" required rows="3" 
+                        <textarea pTextarea fluid id="objectives" [(ngModel)]="meeting.objectives" required rows="3" 
                                   placeholder="Enter meeting objectives..."></textarea>
                     </div>
-
-                    <div class="field">
-                        <label for="dateTime" class="block font-bold mb-2">Date & Time</label>
-                        <p-calendar [(ngModel)]="meeting.dateTime" [showTime]="true" hourFormat="24" 
-                                   dateFormat="yy-mm-dd" [showIcon]="true" class="w-full" />
-                    </div>
-
                     <div class="field">
                         <label for="participants" class="block font-bold mb-2">Participants</label>
                         <p-multiSelect [options]="userList" [(ngModel)]="meeting.participants" 
                                      optionLabel="fullName" placeholder="Select Participants" 
-                                     display="chip" class="w-full" />
+                                     display="chip" class="w-full"
+                                     [scrollHeight]="'200px'"
+                                     [panelStyle]="{'min-width': '100%'}"
+                                     [style]="{'width': '100%'}"
+                                     [virtualScroll]="true"
+                                     [virtualScrollItemSize]="34"
+                                     appendTo="body" />
                     </div>
+                    <div class="field">
+                        <label for="dateTime" class="block font-bold mb-2">Date & Time</label>
+                        <p-calendar fluid [(ngModel)]="meeting.dateTime" [showTime]="true" hourFormat="24" 
+                                   dateFormat="yy-mm-dd" [showIcon]="true" class="w-full" />
+                    </div>
+
+
                 </div>
             </ng-template>
 
@@ -230,10 +236,17 @@ export class meetings implements OnInit {
         this.loadDemoData();
         this.userService.getAll().subscribe({
             next: (users) => {
-                this.userList = users; // No need to map or add fullName manually
+                this.userList = users;
+                console.log('Users loaded:', this.userList); // Debug log
             },
             error: (err) => {
                 console.error('Error fetching users', err);
+                this.messageService.add({
+                    severity: 'error',
+                    summary: 'Error',
+                    detail: 'Failed to load users',
+                    life: 3000
+                });
             }
         });
     }
@@ -279,55 +292,7 @@ export class meetings implements OnInit {
 
     editMeeting(meeting: Meeting) {
         this.meeting = { ...meeting };
-        this.meetingDialog = true; // Open the dialog to edit the meeting
-
-        // Confirmation before updating the meeting
-        this.confirmationService.confirm({
-            message: 'Are you sure you want to save the changes to this meeting?',
-            header: 'Confirm Update',
-            icon: 'pi pi-exclamation-triangle',
-            accept: () => {
-                // Proceed with the update if confirmed
-                this.meetingService.update(this.meeting.id, this.meeting).subscribe({
-                    next: (updatedMeeting) => {
-                        // Update was successful, show success message
-                        this.messageService.add({
-                            severity: 'success',
-                            summary: 'Meeting Updated',
-                            detail: 'The meeting details have been successfully updated.',
-                            life: 3000
-                        });
-                        const meetingsArray = this.meetings(); // Call the signal to get the array of meetings
-                        const index = meetingsArray.findIndex((m) => m.id === updatedMeeting.id);
-
-                        if (index !== -1) {
-                            meetingsArray[index] = updatedMeeting; // Update the meeting in the array
-                            this.meetings.set(meetingsArray); // Set the updated array back to the WritableSignal
-                        }
-
-                        this.meetingDialog = false; // Close the dialog
-                    },
-                    error: (err) => {
-                        // Error occurred, show error message
-                        this.messageService.add({
-                            severity: 'error',
-                            summary: 'Update Failed',
-                            detail: 'There was an error updating the meeting. Please try again.',
-                            life: 3000
-                        });
-                    }
-                });
-            },
-            reject: () => {
-                // User canceled, no action needed
-                this.messageService.add({
-                    severity: 'info',
-                    summary: 'Update Canceled',
-                    detail: 'The update was canceled.',
-                    life: 3000
-                });
-            }
-        });
+        this.meetingDialog = true;
     }
 
     deleteSelectedMeetings() {
@@ -375,40 +340,25 @@ export class meetings implements OnInit {
             header: 'Confirm Deletion',
             icon: 'pi pi-exclamation-triangle',
             accept: () => {
-                // Call the delete API method from MeetingsService
                 this.meetingService.delete(meeting.id).subscribe({
                     next: () => {
-                        // On successful deletion, remove the meeting from the local list
                         this.meetings.set(this.meetings().filter((val) => val.id !== meeting.id));
-
-                        // Clear the meeting object
-                        this.meeting = {} as Meeting;
-                        // Show success message
                         this.messageService.add({
                             severity: 'success',
-                            summary: 'Meeting Deleted',
-                            detail: 'The meeting has been successfully deleted.',
+                            summary: 'Success',
+                            detail: 'Meeting deleted successfully',
                             life: 3000
                         });
                     },
-                    error: (err) => {
-                        // On error, show an error message
+                    error: (error) => {
+                        console.error('Error deleting meeting:', error);
                         this.messageService.add({
                             severity: 'error',
-                            summary: 'Delete Failed',
-                            detail: 'There was an error deleting the meeting. Please try again.',
+                            summary: 'Error',
+                            detail: error.error?.message || 'Failed to delete meeting. You may not have the required permissions.',
                             life: 3000
                         });
                     }
-                });
-            },
-            reject: () => {
-                // User canceled, no action needed
-                this.messageService.add({
-                    severity: 'info',
-                    summary: 'Delete Canceled',
-                    detail: 'The delete operation was canceled.',
-                    life: 3000
                 });
             }
         });
@@ -430,40 +380,46 @@ export class meetings implements OnInit {
         this.submitted = true;
 
         if (this.meeting.title?.trim()) {
-            // Get the current user from the auth service
             this.authService.me().subscribe({
                 next: (user) => {
                     this.meeting.createdBy = user;
 
                     if (this.meeting.id) {
-                        // Update the meeting
-                        this.meetingService.update(this.meeting.id, this.meeting).subscribe({
-                            next: (updatedMeeting) => {
-                                const _meetings = this.meetings();
-                                const index = _meetings.findIndex((m) => m.id === updatedMeeting.id);
-                                if (index !== -1) {
-                                    _meetings[index] = updatedMeeting;
-                                    this.meetings.set([..._meetings]);
-                                }
+                        this.confirmationService.confirm({
+                            message: 'Are you sure you want to save the changes to this meeting?',
+                            header: 'Confirm Update',
+                            icon: 'pi pi-exclamation-triangle',
+                            accept: () => {
+                                this.meetingService.update(this.meeting.id, this.meeting).subscribe({
+                                    next: (updatedMeeting) => {
+                                        const _meetings = this.meetings();
+                                        const index = _meetings.findIndex((m) => m.id === updatedMeeting.id);
+                                        if (index !== -1) {
+                                            _meetings[index] = updatedMeeting;
+                                            this.meetings.set([..._meetings]);
+                                        }
 
-                                this.messageService.add({
-                                    severity: 'success',
-                                    summary: 'Successful',
-                                    detail: 'Meeting Updated',
-                                    life: 3000
-                                });
-                            },
-                            error: () => {
-                                this.messageService.add({
-                                    severity: 'error',
-                                    summary: 'Error',
-                                    detail: 'Error updating meeting',
-                                    life: 3000
+                                        this.messageService.add({
+                                            severity: 'success',
+                                            summary: 'Success',
+                                            detail: 'Meeting updated successfully',
+                                            life: 3000
+                                        });
+                                        this.meetingDialog = false;
+                                    },
+                                    error: (error) => {
+                                        console.error('Error updating meeting:', error);
+                                        this.messageService.add({
+                                            severity: 'error',
+                                            summary: 'Error',
+                                            detail: error.error?.message || 'Failed to update meeting. You may not have the required permissions.',
+                                            life: 3000
+                                        });
+                                    }
                                 });
                             }
                         });
                     } else {
-                        // Create new meeting
                         this.meeting.createdAt = new Date().toISOString();
                         this.meeting.updatedAt = new Date().toISOString();
 
@@ -474,31 +430,30 @@ export class meetings implements OnInit {
 
                                 this.messageService.add({
                                     severity: 'success',
-                                    summary: 'Successful',
-                                    detail: 'Meeting Created',
+                                    summary: 'Success',
+                                    detail: 'Meeting created successfully',
                                     life: 3000
                                 });
+                                this.meetingDialog = false;
                             },
-                            error: () => {
+                            error: (error) => {
+                                console.error('Error creating meeting:', error);
                                 this.messageService.add({
                                     severity: 'error',
                                     summary: 'Error',
-                                    detail: 'Error creating meeting',
+                                    detail: error.error?.message || 'Failed to create meeting',
                                     life: 3000
                                 });
                             }
                         });
                     }
-
-                    // Close dialog and reset meeting
-                    this.meetingDialog = false;
-                    this.meeting = {} as Meeting;
                 },
-                error: () => {
+                error: (error) => {
+                    console.error('Error fetching current user:', error);
                     this.messageService.add({
                         severity: 'error',
                         summary: 'Error',
-                        detail: 'Could not fetch current user',
+                        detail: 'Failed to fetch current user information',
                         life: 3000
                     });
                 }

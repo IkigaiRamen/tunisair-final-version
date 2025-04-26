@@ -53,3 +53,7 @@ jwt:
 file:
   upload-dir: ./uploads
   max-size: 10485760 # 10MB
+
+  output:
+    ansi:
+      enabled: ALWAYS
