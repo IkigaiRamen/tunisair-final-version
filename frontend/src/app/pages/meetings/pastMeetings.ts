@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { TimelineModule } from 'primeng/timeline';
 import { CardModule } from 'primeng/card';
 import { CommonModule } from '@angular/common';
@@ -6,11 +6,13 @@ import { ButtonModule } from 'primeng/button';
 import { MeetingsService } from '../../core/services/meetings.service';
 import { Meeting } from '../../core/models/meeting.model';
 import { RouterModule } from '@angular/router';
+import { MessageService } from 'primeng/api';
+import { ToastModule } from 'primeng/toast';
 
 @Component({
     selector: 'app-past-meetings',
     standalone: true,
-    imports: [CommonModule, TimelineModule, ButtonModule, CardModule, RouterModule],
+    imports: [CommonModule, TimelineModule, ButtonModule, CardModule, RouterModule, ToastModule],
     template: `
     <div class="grid grid-cols-12 gap-8">
         <div class="col-span-full">
@@ -18,7 +20,14 @@ import { RouterModule } from '@angular/router';
                 <div class="flex justify-between items-center mb-6">
                     <h2 class="text-2xl font-bold">Past Meetings Timeline</h2>
                 </div>
-                <p-timeline [value]="meetings" align="alternate" styleClass="customized-timeline">
+                <p-toast></p-toast>
+                <div *ngIf="loading" class="text-center p-4">
+                    <p class="text-lg text-surface-600">Loading past meetings...</p>
+                </div>
+                <div *ngIf="!loading && meetings.length === 0" class="text-center p-4">
+                    <p class="text-lg text-surface-600">No past meetings found.</p>
+                </div>
+                <p-timeline *ngIf="!loading && meetings.length > 0" [value]="meetings" align="alternate" styleClass="customized-timeline">
                     <ng-template #marker let-meeting>
                         <span class="flex w-10 h-10 items-center justify-center text-white rounded-full z-10 shadow-md bg-primary">
                             <i class="pi pi-calendar text-lg"></i>
@@ -39,7 +48,7 @@ import { RouterModule } from '@angular/router';
                                     </div>
                                     <div class="field">
                                         <label class="font-bold text-sm text-surface-600">Created By:</label>
-                                        <p class="mt-1">{{ meeting.createdBy?.fullName }}</p>
+                                        <p class="mt-1">{{ meeting.createdBy?.fullName || 'N/A' }}</p>
                                     </div>
                                     <div class="field">
                                         <label class="font-bold text-sm text-surface-600">Participants:</label>
@@ -79,26 +88,49 @@ import { RouterModule } from '@angular/router';
             }
         }
     `],
-    providers: [MeetingsService]
+    providers: [MeetingsService, MessageService]
 })
-export class pastMeetings {
+export class pastMeetings implements OnInit {
     meetings: Meeting[] = [];
+    loading: boolean = true;
 
-    constructor(private meetingsService: MeetingsService) {}
+    constructor(
+        private meetingsService: MeetingsService,
+        private messageService: MessageService
+    ) {}
 
     ngOnInit(): void {
-        const start = new Date().toISOString();    
-        this.meetingsService.getPastMeetings(start).subscribe(
-            (meetings: Meeting[]) => {
-                this.meetings = meetings;
+        this.loadPastMeetings();
+    }
+
+    loadPastMeetings(): void {
+        this.loading = true;
+        // Get the current date as the start point for past meetings
+        const start = new Date().toISOString();
+        
+        this.meetingsService.getPastMeetings(start).subscribe({
+            next: (meetings: Meeting[]) => {
+                // Sort meetings by date in descending order (most recent first)
+                this.meetings = meetings.sort((a, b) => 
+                    new Date(b.dateTime).getTime() - new Date(a.dateTime).getTime()
+                );
+                this.loading = false;
             },
-            (error: any) => {
+            error: (error: any) => {
                 console.error('Error fetching past meetings:', error);
+                this.messageService.add({
+                    severity: 'error',
+                    summary: 'Error',
+                    detail: 'Failed to load past meetings. Please try again later.',
+                    life: 3000
+                });
+                this.loading = false;
             }
-        );
+        });
     }
 
     formatDate(dateTime: string): string {
+        if (!dateTime) return 'N/A';
         const date = new Date(dateTime);
         return date.toLocaleString('en-US', {
             weekday: 'long',
