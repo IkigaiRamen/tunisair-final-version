@@ -22,6 +22,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @RestController
@@ -69,16 +70,23 @@ public class DocumentController {
     })
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasAnyRole('ADMIN', 'SECRETARY')")
-    public ResponseEntity<Document> uploadDocument(
-            @Parameter(description = "Document file", required = true)
-            @RequestParam("file") MultipartFile file,
-            @Parameter(description = "Meeting ID", required = true)
+    public ResponseEntity<List<Document>> uploadDocuments(
+            @RequestParam("file") MultipartFile[] files,
             @RequestParam("meetingId") Long meetingId) {
+
         Meeting meeting = meetingService.getMeetingById(meetingId)
                 .orElseThrow(() -> new RuntimeException("Meeting not found"));
         User currentUser = authService.getCurrentUser();
-        return ResponseEntity.ok(documentService.uploadDocument(file, meeting, currentUser));
+
+        List<Document> uploadedDocs = new ArrayList<>();
+        for (MultipartFile file : files) {
+            Document doc = documentService.uploadDocument(file, meeting, currentUser);
+            uploadedDocs.add(doc);
+        }
+
+        return ResponseEntity.ok(uploadedDocs);
     }
+
 
     @Operation(summary = "Update document")
     @ApiResponses(value = {

@@ -10,7 +10,6 @@ import { AppFloatingConfigurator } from '../../layout/component/app.floatingconf
 import { AuthService } from '../../core/services/auth.service';
 import { MessageService } from 'primeng/api';
 import { RoleName } from '../../core/models/role-name.model';
-import { ToastModule } from 'primeng/toast';
 
 @Component({
     selector: 'app-signup',

@@ -1,8 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
-import { FileUploadModule } from 'primeng/fileupload';
+import { FileUploadModule, FileUpload } from 'primeng/fileupload';
 import { DropdownModule } from 'primeng/dropdown';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
@@ -24,6 +24,7 @@ import { Router } from '@angular/router';
         ToastModule
     ],
     template: `
+        <p-toast></p-toast>
         <div class="grid grid-cols-12 gap-8">
             <div class="col-span-full">
                 <div class="card">
@@ -41,18 +42,29 @@ import { Router } from '@angular/router';
 
                         <div class="field">
                             <label class="block font-bold mb-2">Upload Files</label>
-                            <p-fileupload #fu mode="advanced" [multiple]="true" accept="*/*" maxFileSize="10000000"
-                                        [customUpload]="true" (uploadHandler)="uploadFiles($event)"
-                                        chooseLabel="Choose Files" uploadLabel="Upload" cancelLabel="Cancel"
-                                        [showUploadButton]="true" [showCancelButton]="true"
+                            <p-fileupload #fileUpload
+                                        mode="advanced"
+                                        [multiple]="true"
+                                        accept="*/*"
+                                        maxFileSize="10000000"
+                                        [customUpload]="true"
+                                        (uploadHandler)="uploadFiles($event)"
+                                        (onSelect)="onFileSelect($event)"
+                                        (onError)="onUploadError($event)"
+                                        (onClear)="onClear()"
+                                        chooseLabel="Choose Files"
+                                        uploadLabel="Upload"
+                                        cancelLabel="Cancel"
+                                        [showUploadButton]="true"
+                                        [showCancelButton]="true"
                                         [auto]="false">
-                                <ng-template #empty>
+                                <ng-template pTemplate="empty">
                                     <div class="flex align-items-center justify-content-center p-4">
                                         <i class="pi pi-file mr-2 text-2xl"></i>
                                         <span class="text-lg">Drag and drop files to here to upload.</span>
                                     </div>
                                 </ng-template>
-                                <ng-template #content>
+                                <ng-template pTemplate="content">
                                     <ul *ngIf="uploadedFiles.length" class="m-0 p-0 list-none">
                                         <li *ngFor="let file of uploadedFiles" class="flex items-center gap-2 p-2">
                                             <i class="pi pi-file text-xl"></i>
@@ -65,7 +77,7 @@ import { Router } from '@angular/router';
 
                         <div class="flex justify-end gap-2">
                             <p-button label="Cancel" icon="pi pi-times" (onClick)="goBack()" />
-                            <p-button label="Upload" icon="pi pi-upload" (onClick)="fu.upload()" />
+                            <p-button label="Upload" icon="pi pi-upload" (onClick)="uploadFiles(fileUpload)" [disabled]="!selectedMeeting || !uploadedFiles.length" />
                         </div>
                     </div>
                 </div>
@@ -75,6 +87,8 @@ import { Router } from '@angular/router';
     providers: [MessageService, DocumentsService, MeetingsService]
 })
 export class UploadDocumentComponent implements OnInit {
+    @ViewChild('fileUpload') fileUpload!: FileUpload;
+    
     meetings: Meeting[] = [];
     selectedMeeting: Meeting | null = null;
     uploadedFiles: any[] = [];
@@ -105,6 +119,23 @@ export class UploadDocumentComponent implements OnInit {
         });
     }
 
+    onFileSelect(event: any) {
+        this.uploadedFiles = event.files;
+        console.log('Files selected:', this.uploadedFiles);
+    }
+
+    onUploadError(event: any) {
+        this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'Error uploading file: ' + event.error
+        });
+    }
+
+    onClear() {
+        this.uploadedFiles = [];
+    }
+
     uploadFiles(event: any) {
         if (!this.selectedMeeting) {
             this.messageService.add({
@@ -115,27 +146,37 @@ export class UploadDocumentComponent implements OnInit {
             return;
         }
 
+        if (!this.uploadedFiles.length) {
+            this.messageService.add({
+                severity: 'error',
+                summary: 'Error',
+                detail: 'Please select at least one file to upload'
+            });
+            return;
+        }
+
         const formData = new FormData();
-        for (const file of event.files) {
+        for (const file of this.uploadedFiles) {
             formData.append('file', file);
         }
         formData.append('meetingId', this.selectedMeeting.id.toString());
 
         this.documentsService.upload(formData).subscribe({
-            next: (document) => {
+            next: (response) => {
                 this.messageService.add({
                     severity: 'success',
                     summary: 'Success',
-                    detail: 'Document uploaded successfully'
+                    detail: 'Documents uploaded successfully'
                 });
                 this.uploadedFiles = [];
+                this.fileUpload.clear();
                 this.goBack();
             },
             error: (error) => {
                 this.messageService.add({
                     severity: 'error',
                     summary: 'Error',
-                    detail: 'Failed to upload document'
+                    detail: 'Failed to upload documents: ' + (error.error?.message || 'Unknown error')
                 });
             }
         });
