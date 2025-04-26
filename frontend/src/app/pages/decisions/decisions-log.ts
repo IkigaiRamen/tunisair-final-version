@@ -20,7 +20,7 @@ import { TasksService } from '../../core/services/tasks.service';
 import { UsersService } from '../../core/services/users.service';
 import { RouterModule } from '@angular/router';
 import { DropdownModule } from 'primeng/dropdown';
-
+import { AuthService } from '../../core/services/auth.service';
 @Component({
     selector: 'app-decisions-log',
     standalone: true,
@@ -47,7 +47,7 @@ import { DropdownModule } from 'primeng/dropdown';
                     <div class="flex justify-between items-center mb-6">
                         <h2 class="text-2xl font-bold">Decisions Log</h2>
                         <div class="flex gap-2">
-                            <p-button icon="pi pi-plus" label="New Decision" (onClick)="openNew()" />
+                            <p-button icon="pi pi-plus" label="New Decision" (onClick)="openNew()" *ngIf="userRole !== 'ROLE_BOARD_MEMBER'" />
                         </div>
                     </div>
 
@@ -71,7 +71,7 @@ import { DropdownModule } from 'primeng/dropdown';
                                 <th pSortableColumn="responsibleUser">Responsible <p-sortIcon field="responsibleUser" /></th>
                                 <th pSortableColumn="deadline">Deadline <p-sortIcon field="deadline" /></th>
                                 <th pSortableColumn="tasks">Tasks <p-sortIcon field="tasks" /></th>
-                                <th>Actions</th>
+                                <th *ngIf="userRole !== 'ROLE_BOARD_MEMBER'">Actions</th>
                             </tr>
                         </ng-template>
                         <ng-template #body let-decision>
@@ -92,7 +92,7 @@ import { DropdownModule } from 'primeng/dropdown';
                                                [severity]="getTaskStatusSeverity(task.status)" />
                                     </div>
                                 </td>
-                                <td>
+                                <td *ngIf="userRole !== 'ROLE_BOARD_MEMBER'">
                                     <div class="flex gap-2">
                                         <p-button icon="pi pi-pencil" class="p-button-sm" [rounded]="true" [outlined]="true" 
                                                   (onClick)="editDecision(decision)" />
@@ -162,15 +162,25 @@ export class DecisionsLogComponent implements OnInit {
     userList: User[] = [];
     decisionDialog: boolean = false;
     decision: Decision = {} as Decision;
+    userRole: string = '';
 
     constructor(
         private decisionsService: DecisionsService,
         private tasksService: TasksService,
         private usersService: UsersService,
-        private messageService: MessageService
+        private messageService: MessageService,
+        private authService: AuthService
     ) {}
 
-    ngOnInit() {
+        ngOnInit() {
+        this.authService.me().subscribe({
+            next: (user: User) => {
+                this.userRole = user.roles[0].name;
+            },
+            error: (error: any) => {
+                console.error('Error fetching current user', error);
+            }
+        });
         this.loadDecisions();
         this.loadUsers();
     }

@@ -5,6 +5,7 @@ import com.tunisair.meetingmanagement.model.User;
 import com.tunisair.meetingmanagement.repository.MeetingRepository;
 import com.tunisair.meetingmanagement.repository.UserRepository;
 import com.tunisair.meetingmanagement.service.MeetingService;
+import com.tunisair.meetingmanagement.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,6 +21,7 @@ public class MeetingServiceImpl implements MeetingService {
 
     private final MeetingRepository meetingRepository;
     private final UserRepository userRepository;
+    private final NotificationService notificationService;
 
     @Override
     public List<Meeting> getAllMeetings() {
@@ -34,7 +36,14 @@ public class MeetingServiceImpl implements MeetingService {
     @Override
     @Transactional
     public Meeting createMeeting(Meeting meeting) {
-        return meetingRepository.save(meeting);
+        Meeting createdMeeting = meetingRepository.save(meeting);
+
+        // Notify all participants
+        for (User participant : createdMeeting.getParticipants()) {
+            notificationService.sendMeetingInvitation(participant, createdMeeting.getTitle(), createdMeeting.getDateTime());
+        }
+
+        return createdMeeting;
     }
 
     @Override
@@ -48,7 +57,16 @@ public class MeetingServiceImpl implements MeetingService {
         meeting.setObjectives(meetingDetails.getObjectives());
         meeting.setDateTime(meetingDetails.getDateTime());
 
-        return meetingRepository.save(meeting);
+        Meeting updatedMeeting = meetingRepository.save(meeting);
+
+        for (User participant : updatedMeeting.getParticipants()) {
+            String subject = "Meeting Updated: " + updatedMeeting.getTitle();
+            String description = String.format("The meeting has been updated.\nNew Date & Time: %s\nAgenda: %s",
+                    updatedMeeting.getDateTime(), updatedMeeting.getAgenda());
+            notificationService.sendTaskAssignment(participant, subject, description, updatedMeeting.getDateTime());
+        }
+
+        return updatedMeeting;
     }
 
     @Override
@@ -56,6 +74,14 @@ public class MeetingServiceImpl implements MeetingService {
     public void deleteMeeting(Long id) {
         Meeting meeting = meetingRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Meeting not found with id: " + id));
+
+        for (User participant : meeting.getParticipants()) {
+            String subject = "Meeting Cancelled: " + meeting.getTitle();
+            String description = String.format("The meeting scheduled on %s has been cancelled.",
+                    meeting.getDateTime());
+            notificationService.sendTaskAssignment(participant, subject, description, LocalDateTime.now());
+        }
+
         meetingRepository.delete(meeting);
     }
 
@@ -84,8 +110,6 @@ public class MeetingServiceImpl implements MeetingService {
         return meetingRepository.findByDateTimeBefore(start);
     }
 
-
-
     @Override
     public List<Meeting> searchMeetingsByTitle(String title) {
         return meetingRepository.findByTitleContainingIgnoreCase(title);
@@ -101,12 +125,17 @@ public class MeetingServiceImpl implements MeetingService {
     public Meeting addParticipant(Long meetingId, Long userId) {
         Meeting meeting = meetingRepository.findById(meetingId)
                 .orElseThrow(() -> new RuntimeException("Meeting not found with id: " + meetingId));
-        
+
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
-        
+
         meeting.getParticipants().add(user);
-        return meetingRepository.save(meeting);
+        Meeting updated = meetingRepository.save(meeting);
+
+        // Notify the new participant
+        notificationService.sendMeetingInvitation(user, updated.getTitle(), updated.getDateTime());
+
+        return updated;
     }
 
     @Override
@@ -114,11 +143,18 @@ public class MeetingServiceImpl implements MeetingService {
     public Meeting removeParticipant(Long meetingId, Long userId) {
         Meeting meeting = meetingRepository.findById(meetingId)
                 .orElseThrow(() -> new RuntimeException("Meeting not found with id: " + meetingId));
-        
+
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
-        
+
         meeting.getParticipants().remove(user);
-        return meetingRepository.save(meeting);
+        Meeting updated = meetingRepository.save(meeting);
+
+        String subject = "Removed from Meeting: " + updated.getTitle();
+        String description = String.format("You have been removed from the meeting scheduled on %s.", updated.getDateTime());
+        notificationService.sendTaskAssignment(user, subject, description, LocalDateTime.now());
+
+        return updated;
     }
-} 
+
+}

@@ -5,6 +5,7 @@ import com.tunisair.meetingmanagement.model.Task;
 import com.tunisair.meetingmanagement.model.User;
 import com.tunisair.meetingmanagement.repository.TaskRepository;
 import com.tunisair.meetingmanagement.repository.UserRepository;
+import com.tunisair.meetingmanagement.service.NotificationService;
 import com.tunisair.meetingmanagement.service.TaskService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +21,9 @@ public class TaskServiceImpl implements TaskService {
 
     private final TaskRepository taskRepository;
     private final UserRepository userRepository;
+
+    // Inject your existing notification method
+    private final NotificationService notificationService;  // Assuming your notification method is in this service
 
     @Override
     public List<Task> getAllTasks() {
@@ -41,7 +45,6 @@ public class TaskServiceImpl implements TaskService {
         // Save the task and return it
         return taskRepository.save(task);
     }
-
 
     @Override
     public Task updateTask(Long id, Task taskDetails) {
@@ -98,7 +101,12 @@ public class TaskServiceImpl implements TaskService {
                 .orElseThrow(() -> new EntityNotFoundException("User not found"));
 
         task.setAssignedTo(user);
-        return taskRepository.save(task);
+        Task assignedTask = taskRepository.save(task);
+
+        // Send notification for task assignment using the existing method
+        notificationService.sendTaskAssignment(user, "Task Assignment", task.getDescription(), task.getDeadline());
+
+        return assignedTask;
     }
 
     @Override

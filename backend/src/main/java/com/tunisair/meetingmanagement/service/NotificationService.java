@@ -9,7 +9,8 @@ import java.util.List;
 public interface NotificationService {
     void sendMeetingInvitation(User user, String meetingTitle, LocalDateTime meetingDateTime);
     void sendMeetingReminder(User user, String meetingTitle, LocalDateTime meetingDateTime);
-    void sendTaskAssignment(User user, String taskDescription, LocalDateTime deadline);
+    void sendTaskAssignment(User user, String subject, String taskDescription, LocalDateTime deadline);
+
     void sendTaskReminder(User user, String taskDescription, LocalDateTime deadline);
     void sendDecisionNotification(User user, String decisionContent, LocalDateTime deadline);
     List<NotificationLog> getNotificationsByUser(User user);

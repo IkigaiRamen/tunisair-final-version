@@ -6,6 +6,7 @@ import com.tunisair.meetingmanagement.model.User;
 import com.tunisair.meetingmanagement.repository.DecisionRepository;
 import com.tunisair.meetingmanagement.repository.UserRepository;
 import com.tunisair.meetingmanagement.service.DecisionService;
+import com.tunisair.meetingmanagement.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import org.hibernate.Hibernate;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -22,6 +23,7 @@ public class DecisionServiceImpl implements DecisionService {
 
     private final DecisionRepository decisionRepository;
     private final UserRepository userRepository;
+    private final NotificationService notificationService;
 
     @Override
     public List<Decision> getAllDecisions() {
@@ -39,8 +41,17 @@ public class DecisionServiceImpl implements DecisionService {
         decision.setCreatedAt(LocalDateTime.now());
         Decision saved = decisionRepository.save(decision);
 
-        Hibernate.initialize(saved.getMeeting()); // avoid proxy errors
+        Hibernate.initialize(saved.getMeeting());
         Hibernate.initialize(saved.getResponsibleUser());
+
+        if (saved.getResponsibleUser() != null) {
+            notificationService.sendTaskAssignment(
+                    saved.getResponsibleUser(),
+                    "New Decision Assigned",
+                    String.format("A new decision \"%s\" has been assigned to you.", saved.getContent()),
+                    saved.getDeadline()
+            );
+        }
 
         return saved;
     }
@@ -56,7 +67,18 @@ public class DecisionServiceImpl implements DecisionService {
         decision.setResponsibleUser(decisionDetails.getResponsibleUser());
         decision.setUpdatedAt(LocalDateTime.now());
 
-        return decisionRepository.save(decision);
+        Decision updatedDecision = decisionRepository.save(decision);
+
+        if (updatedDecision.getResponsibleUser() != null) {
+            notificationService.sendTaskAssignment(
+                    updatedDecision.getResponsibleUser(),
+                    "Decision Updated",
+                    String.format("Your decision \"%s\" has been updated.", updatedDecision.getContent()),
+                    updatedDecision.getDeadline()
+            );
+        }
+
+        return updatedDecision;
     }
 
     @Override
@@ -64,14 +86,24 @@ public class DecisionServiceImpl implements DecisionService {
     public void deleteDecision(Long id) {
         Decision decision = decisionRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Decision not found with id: " + id));
+
+        if (decision.getResponsibleUser() != null) {
+            notificationService.sendTaskAssignment(
+                    decision.getResponsibleUser(),
+                    "Decision Deleted",
+                    String.format("The decision \"%s\" assigned to you has been deleted.", decision.getContent()),
+                    LocalDateTime.now()
+            );
+        }
+
         decisionRepository.delete(decision);
     }
 
     @Override
     @Transactional
-    @EntityGraph(attributePaths = "tasks")  // Ensure tasks are fetched eagerly with decisions
+    @EntityGraph(attributePaths = "tasks")
     public List<Decision> getDecisionsByMeeting(Meeting meeting) {
-        return decisionRepository.findByMeeting(meeting); // Uses @EntityGraph
+        return decisionRepository.findByMeeting(meeting);
     }
 
     @Override
@@ -101,7 +133,16 @@ public class DecisionServiceImpl implements DecisionService {
         decision.setResponsibleUser(user);
         decision.setUpdatedAt(LocalDateTime.now());
 
-        return decisionRepository.save(decision);
+        Decision updatedDecision = decisionRepository.save(decision);
+
+        notificationService.sendTaskAssignment(
+                user,
+                "New Decision Responsibility",
+                String.format("You have been assigned to a new decision: \"%s\".", updatedDecision.getContent()),
+                updatedDecision.getDeadline()
+        );
+
+        return updatedDecision;
     }
 
     @Override
@@ -113,6 +154,17 @@ public class DecisionServiceImpl implements DecisionService {
         decision.setDeadline(newDeadline);
         decision.setUpdatedAt(LocalDateTime.now());
 
-        return decisionRepository.save(decision);
+        Decision updatedDecision = decisionRepository.save(decision);
+
+        if (updatedDecision.getResponsibleUser() != null) {
+            notificationService.sendTaskAssignment(
+                    updatedDecision.getResponsibleUser(),
+                    "Decision Deadline Updated",
+                    String.format("The deadline for your decision \"%s\" has been updated to %s.", updatedDecision.getContent(), newDeadline),
+                    newDeadline
+            );
+        }
+
+        return updatedDecision;
     }
-} 
+}

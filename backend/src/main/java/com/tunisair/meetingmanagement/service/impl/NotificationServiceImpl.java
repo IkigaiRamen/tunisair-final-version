@@ -45,14 +45,13 @@ public class NotificationServiceImpl implements NotificationService {
 
     @Override
     @Transactional
-    public void sendTaskAssignment(User user, String taskDescription, LocalDateTime deadline) {
-        String subject = "New Task Assignment";
-        String message = String.format("You have been assigned a new task: %s\nDeadline: %s",
-                taskDescription, deadline);
+    public void sendTaskAssignment(User user, String subject, String taskDescription, LocalDateTime deadline) {
+        String message = String.format("%s\nDeadline: %s", taskDescription, deadline);
 
         sendEmail(user.getEmail(), subject, message);
         saveNotificationLog(user, message, NotificationLog.NotificationType.EMAIL);
     }
+
 
     @Override
     @Transactional

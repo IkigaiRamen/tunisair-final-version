@@ -5,6 +5,7 @@ import com.tunisair.meetingmanagement.model.Meeting;
 import com.tunisair.meetingmanagement.model.User;
 import com.tunisair.meetingmanagement.repository.DocumentRepository;
 import com.tunisair.meetingmanagement.service.DocumentService;
+import com.tunisair.meetingmanagement.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,6 +25,7 @@ import java.util.UUID;
 public class DocumentServiceImpl implements DocumentService {
 
     private final DocumentRepository documentRepository;
+    private final NotificationService notificationService; // Add notification service
     private final Path fileStorageLocation = Paths.get("uploads");
 
     @Override
@@ -44,17 +46,12 @@ public class DocumentServiceImpl implements DocumentService {
         }
 
         try {
-            Files.createDirectories(fileStorageLocation); // ✅ Ensure directory exists
+            Files.createDirectories(fileStorageLocation); // Ensure directory exists
 
             String fileName = UUID.randomUUID().toString() + "_" + file.getOriginalFilename();
             Path targetLocation = fileStorageLocation.resolve(fileName);
 
-            // 🐞 Debug logs
-            System.out.println("Uploading file: " + file.getOriginalFilename());
-            System.out.println("Resolved path: " + targetLocation);
-            System.out.println("File storage location: " + fileStorageLocation.toAbsolutePath());
-
-            Files.copy(file.getInputStream(), targetLocation); // 🧱 File copy
+            Files.copy(file.getInputStream(), targetLocation); // File copy
 
             Document document = new Document();
             document.setName(file.getOriginalFilename());
@@ -66,12 +63,21 @@ public class DocumentServiceImpl implements DocumentService {
             document.setCreatedAt(LocalDateTime.now());
             document.setSize(file.getSize());
 
+            // Notify all participants about the new document
+            for (User participant : meeting.getParticipants()) {
+                String subject = "New Document Uploaded for Meeting: " + meeting.getTitle();
+                String description = String.format("A new document has been uploaded for the meeting scheduled on %s. Document: %s",
+                        meeting.getDateTime(), document.getName());
+                notificationService.sendTaskAssignment(participant, subject, description, meeting.getDateTime());
+            }
+
             return documentRepository.save(document);
         } catch (IOException ex) {
-            ex.printStackTrace(); // 🐞 Print detailed stack trace
+            ex.printStackTrace();
             throw new RuntimeException("Could not store file. Please try again!", ex);
         }
     }
+
     @Override
     @Transactional
     public Document updateDocument(Long id, Document documentDetails) {
@@ -80,7 +86,14 @@ public class DocumentServiceImpl implements DocumentService {
 
         document.setName(documentDetails.getName());
         document.setType(documentDetails.getType());
-        // Note: Path and version should not be updated here
+
+        // Notify all participants that the document has been updated
+        for (User participant : document.getMeeting().getParticipants()) {
+            String subject = "Document Updated: " + document.getName();
+            String description = String.format("The document has been updated for the meeting scheduled on %s. New Version: %s",
+                    document.getMeeting().getDateTime(), document.getVersion());
+            notificationService.sendTaskAssignment(participant, subject, description, document.getMeeting().getDateTime());
+        }
 
         return documentRepository.save(document);
     }
@@ -90,9 +103,18 @@ public class DocumentServiceImpl implements DocumentService {
     public void deleteDocument(Long id) {
         Document document = documentRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Document not found with id: " + id));
-        
+
         try {
             Files.deleteIfExists(Paths.get(document.getPath()));
+
+            // Notify participants about the deleted document
+            for (User participant : document.getMeeting().getParticipants()) {
+                String subject = "Document Deleted: " + document.getName();
+                String description = String.format("The document uploaded for the meeting scheduled on %s has been deleted.",
+                        document.getMeeting().getDateTime());
+                notificationService.sendTaskAssignment(participant, subject, description, LocalDateTime.now());
+            }
+
             documentRepository.delete(document);
         } catch (IOException ex) {
             throw new RuntimeException("Could not delete file", ex);
@@ -127,6 +149,14 @@ public class DocumentServiceImpl implements DocumentService {
             existingDocument.setVersion(existingDocument.getVersion() + 1);
             existingDocument.setUpdatedAt(LocalDateTime.now());
 
+            // Notify participants about the new document version
+            for (User participant : existingDocument.getMeeting().getParticipants()) {
+                String subject = "New Version of Document: " + existingDocument.getName();
+                String description = String.format("A new version of the document has been uploaded for the meeting scheduled on %s. Version: %d",
+                        existingDocument.getMeeting().getDateTime(), existingDocument.getVersion());
+                notificationService.sendTaskAssignment(participant, subject, description, existingDocument.getMeeting().getDateTime());
+            }
+
             return documentRepository.save(existingDocument);
         } catch (IOException ex) {
             throw new RuntimeException("Could not store new version of file", ex);
@@ -150,7 +180,7 @@ public class DocumentServiceImpl implements DocumentService {
     public boolean hasAccess(User user, Document document) {
         // Implement access control logic based on user roles and meeting participation
         return user.getRoles().stream().anyMatch(role -> role.getName().equals("ROLE_ADMIN")) ||
-               document.getMeeting().getParticipants().contains(user) ||
-               document.getUploadedBy().equals(user);
+                document.getMeeting().getParticipants().contains(user) ||
+                document.getUploadedBy().equals(user);
     }
-} 
+}

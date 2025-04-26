@@ -30,6 +30,7 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService } from 'primeng/api';
 import { FileSizePipe } from '../../shared/file-size.pipe';
 import { DropdownModule } from 'primeng/dropdown';
+import { AuthService } from '../../core/services/auth.service';
 @Component({
     selector: 'app-meeting-details',
     standalone: true,
@@ -59,7 +60,7 @@ import { DropdownModule } from 'primeng/dropdown';
                 <div class="card">
                     <div class="flex justify-between items-center mb-4">
                         <h2 class="text-2xl font-bold">{{ meeting?.title }}</h2>
-                        <div class="flex gap-2">
+                        <div class="flex gap-2" *ngIf="userRole !== 'ROLE_BOARD_MEMBER'">
                             <p-button icon="pi pi-pencil" label="Edit" (onClick)="editMeeting()" />
                             <p-button icon="pi pi-trash" severity="danger" label="Delete" (onClick)="deleteMeeting()" />
                         </div>
@@ -144,7 +145,7 @@ import { DropdownModule } from 'primeng/dropdown';
                                         <th>Size</th>
                                         <th>Uploaded By</th>
                                         <th>Upload Date</th>
-                                        <th>Actions</th>
+                                        <th *ngIf="userRole !== 'ROLE_BOARD_MEMBER'">Actions</th>
                                     </tr>
                                 </ng-template>
                                 <ng-template pTemplate="body" let-document>
@@ -157,7 +158,7 @@ import { DropdownModule } from 'primeng/dropdown';
                                         <td>{{ document.uploadedBy?.fullName }}</td>
                                         <td>{{ document.createdAt | date: 'medium' }}</td>
                                         <td>
-                                            <div class="flex gap-2">
+                                            <div class="flex gap-2" *ngIf="userRole !== 'ROLE_BOARD_MEMBER'">
                                                 <p-button icon="pi pi-download" class="p-button-sm" [rounded]="true" [outlined]="true" (onClick)="downloadDocument(document)" />
                                                 <p-button icon="pi pi-trash" severity="danger" class="p-button-sm" [rounded]="true" [outlined]="true" (onClick)="confirmDeleteDocument(document)" />
                                             </div>
@@ -188,7 +189,7 @@ import { DropdownModule } from 'primeng/dropdown';
                                         <th>Content</th>
                                         <th>Responsible</th>
                                         <th>Deadline</th>
-                                        <th>Actions</th>
+                                        <th *ngIf="userRole !== 'ROLE_BOARD_MEMBER'">Actions</th>
                                     </tr>
                                 </ng-template>
                                 <ng-template pTemplate="body" let-decision>
@@ -196,7 +197,7 @@ import { DropdownModule } from 'primeng/dropdown';
                                         <td>{{ decision.content }}</td>
                                         <td>{{ decision.responsibleUser?.fullName }}</td>
                                         <td>{{ decision.deadline | date: 'medium' }}</td>
-                                        <td>
+                                        <td *ngIf="userRole !== 'ROLE_BOARD_MEMBER'">
                                             <p-button icon="pi pi-pencil" [rounded]="true" [outlined]="true" (onClick)="editDecision(decision)" />
                                             <p-button icon="pi pi-trash" severity="danger" [rounded]="true" [outlined]="true" (onClick)="deleteDecision(decision)" />
                                         </td>
@@ -217,7 +218,7 @@ import { DropdownModule } from 'primeng/dropdown';
                                         <th>Status</th>
                                         <th>Assigned To</th>
                                         <th>Deadline</th>
-                                        <th>Actions</th>
+                                        <th *ngIf="userRole !== 'ROLE_BOARD_MEMBER'">Actions</th>
                                     </tr>
                                 </ng-template>
                                 <ng-template pTemplate="body" let-task>
@@ -228,7 +229,7 @@ import { DropdownModule } from 'primeng/dropdown';
                                         </td>
                                         <td>{{ task.assignedTo?.fullName }}</td>
                                         <td>{{ task.deadline | date: 'medium' }}</td>
-                                        <td>
+                                        <td *ngIf="userRole !== 'ROLE_BOARD_MEMBER'">
                                             <p-button icon="pi pi-pencil" [rounded]="true" [outlined]="true" (onClick)="editTask(task)" />
                                             <p-button icon="pi pi-trash" severity="danger" [rounded]="true" [outlined]="true" (onClick)="deleteTask(task)" />
                                         </td>
@@ -377,6 +378,8 @@ export class MeetingDetailsComponent implements OnInit {
 
     uploadedFiles: any[] = [];
 
+    userRole: string = '';
+
     constructor(
         private route: ActivatedRoute,
         private router: Router,
@@ -386,10 +389,19 @@ export class MeetingDetailsComponent implements OnInit {
         private usersService: UsersService,
         private documentsService: DocumentsService,
         private messageService: MessageService,
-        private confirmationService: ConfirmationService
+        private confirmationService: ConfirmationService,
+        private authService: AuthService
     ) {}
 
     ngOnInit() {
+        this.authService.me().subscribe({
+            next: (user: User) => {
+                this.userRole = user.roles[0].name;
+            },
+            error: (error: any) => {
+                console.error('Error fetching current user', error);
+            }
+        });
         const meetingId = this.route.snapshot.params['id'];
         if (meetingId) {
             this.loadMeetingDetails(meetingId);

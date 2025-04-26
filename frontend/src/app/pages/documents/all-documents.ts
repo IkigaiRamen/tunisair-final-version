@@ -14,6 +14,8 @@ import { Document } from '../../core/models/document.model';
 import { DocumentsService } from '../../core/services/documents.service';
 import { RouterModule } from '@angular/router';
 import { FileSizePipe } from '../../shared/file-size.pipe';
+import { AuthService } from '../../core/services/auth.service';
+import { User } from '../../core/models/user.model';
 @Component({
     selector: 'app-all-documents',
     standalone: true,
@@ -90,7 +92,7 @@ import { FileSizePipe } from '../../shared/file-size.pipe';
                                         <p-button icon="pi pi-download" class="p-button-sm" [rounded]="true" [outlined]="true" 
                                                   (onClick)="downloadDocument(document)" />
                                         <p-button icon="pi pi-trash" severity="danger" class="p-button-sm" [rounded]="true" [outlined]="true" 
-                                                  (onClick)="confirmDelete(document)" />
+                                                  (onClick)="confirmDelete(document)" *ngIf="userRole !== 'ROLE_BOARD_MEMBER'" />
                                     </div>
                                 </td>
                             </tr>
@@ -115,14 +117,24 @@ import { FileSizePipe } from '../../shared/file-size.pipe';
 export class AllDocumentsComponent implements OnInit {
     @ViewChild('dt') dt!: Table;
     documents: Document[] = [];
+    userRole: string = '';
 
     constructor(
         private documentsService: DocumentsService,
         private messageService: MessageService,
-        private confirmationService: ConfirmationService
+        private confirmationService: ConfirmationService,
+        private authService: AuthService
     ) {}
 
     ngOnInit() {
+        this.authService.me().subscribe({
+            next: (user: User) => {
+                this.userRole = user.roles[0].name;
+            },
+            error: (error: any) => {
+                console.error('Error fetching current user', error);
+            }
+        });
         this.loadDocuments();
     }
 

@@ -86,7 +86,7 @@ export class Login implements OnInit {
                 };
                 this.authService.setUser(user);
                 this.messageService.add({ severity: 'success', summary: 'Login Successful', detail: 'Welcome back!' });
-                this.router.navigate(['/']);
+                this.router.navigate(['/meetings/upcoming']);
             },
             error: (err) => {
                 this.messageService.add({ severity: 'error', summary: 'Login Failed', detail: err.error?.message || 'Please try again' });
