@@ -6,6 +6,7 @@ import { Landing } from './app/pages/landing/landing';
 import { Notfound } from './app/pages/notfound/notfound';
 import { AuthGuard } from './app/core/guards/auth.guard';
 import { ProfileComponent } from './app/pages/profile/profile.component';
+import { MyDecisionsTasksComponent } from './app/pages/my-decisions-tasks/my-decisions-tasks';
 
 import { meetings } from './app/pages/meetings/meetings';
 import { upcomingMeetings } from './app/pages/meetings/upcomingMeetings';
@@ -50,6 +51,7 @@ export const appRoutes: Routes = [
                 children: [
                     { path: 'tasks', component: TaskProgressComponent },
                     { path: 'decisions', component: DecisionsLogComponent },
+                    { path: 'my-decisions-tasks', component: MyDecisionsTasksComponent },
                 ]
             },
             {

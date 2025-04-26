@@ -11,19 +11,23 @@ import { UsersService } from '../../core/services/users.service';
 import { User } from '../../core/models/user.model';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
+import { DialogModule } from 'primeng/dialog';
+import { FormsModule } from '@angular/forms';
+import { DropdownModule } from 'primeng/dropdown';
+import { Role } from '../../core/models/role.model';
 
 @Component({
     selector: 'app-admin-crud',
     standalone: true,
     imports: [CommonModule, TableModule, ButtonModule, ToastModule, ToolbarModule, ConfirmDialogModule, InputTextModule, InputIconModule,
-        IconFieldModule,],
+        IconFieldModule, DialogModule, FormsModule, DropdownModule],
     template: `
     <p-toast></p-toast>
     <p-toolbar styleClass="mb-4">
       <ng-template #start>
+        <p-button label="New User" icon="pi pi-plus" class="mr-2" (click)="openNew()"></p-button>
         <p-button label="Delete" icon="pi pi-trash" class="mr-2" [disabled]="!selectedUsers.length" (click)="deleteSelectedUsers()"></p-button>
       </ng-template>
-   
     </p-toolbar>
     <p-table #dt [value]="users" [(selection)]="selectedUsers" [paginator]="true" [rows]="10" [rowsPerPageOptions]="[5,10,20]" dataKey="id" [globalFilterFields]="['fullName','email']">
       <ng-template #caption>
@@ -40,7 +44,7 @@ import { InputIconModule } from 'primeng/inputicon';
           <th style="width:3rem"><p-tableHeaderCheckbox></p-tableHeaderCheckbox></th>
           <th pSortableColumn="fullName">Full Name <p-sortIcon field="fullName"></p-sortIcon></th>
           <th pSortableColumn="email">Email <p-sortIcon field="email"></p-sortIcon></th>
-          <th>Roles</th>
+          <th>Role</th>
           <th>Actions</th>
         </tr>
       </ng-template>
@@ -49,12 +53,42 @@ import { InputIconModule } from 'primeng/inputicon';
           <td><p-tableCheckbox [value]="user"></p-tableCheckbox></td>
           <td>{{user.fullName}}</td>
           <td>{{user.email}}</td>
-          <td>{{ getRoleNames(user) }}</td>         
+          <td>{{ getRoleName(user) }}</td>         
           <td><p-button icon="pi pi-trash" severity="danger" [rounded]="true" [outlined]="true" (click)="confirmDelete(user)"></p-button></td>
         </tr>
       </ng-template>
     </p-table>
     <p-confirmDialog header="Confirm" icon="pi pi-exclamation-triangle"></p-confirmDialog>
+
+    <p-dialog [(visible)]="userDialog" [style]="{width: '450px'}" header="New User" [modal]="true" styleClass="p-fluid">
+        <div class="field">
+            <label for="fullName" class="block">Full Name</label>
+            <input id="fullName" type="text" pInputText fluid [(ngModel)]="user.fullName" required autofocus />
+        </div>
+        <div class="field">
+            <label for="email" class="block">Email</label>
+            <input id="email" type="email" pInputText fluid [(ngModel)]="user.email" required />
+        </div>
+        <div class="field">
+            <label for="password" class="block">Password</label>
+            <input id="password" type="password" pInputText fluid [(ngModel)]="user.password" required />
+        </div>
+        <div class="field">
+            <label for="role" class="block">Role</label>
+            <p-dropdown [options]="availableRoles" [(ngModel)]="selectedRole" optionLabel="name" 
+                       [filter]="true" placeholder="Select Role" [showClear]="true"
+                       [appendTo]="'body'"
+                       [style]="{'width': '100%'}"
+                       [panelStyle]="{'min-width': '100%', 'max-height': '200px'}"
+                       [autoDisplayFirst]="false">
+            </p-dropdown>
+        </div>
+        <ng-template pTemplate="footer">
+            <p-button label="Cancel" icon="pi pi-times" (click)="hideDialog()" styleClass="p-button-text"></p-button>
+            <p-button label="Save" icon="pi pi-check" (click)="saveUser()" 
+                     [disabled]="!user.fullName || !user.email || !user.password || !selectedRole"></p-button>
+        </ng-template>
+    </p-dialog>
   `,
     providers: [MessageService, UsersService, ConfirmationService]
 })
@@ -62,13 +96,22 @@ import { InputIconModule } from 'primeng/inputicon';
 export class AdminCrudComponent implements OnInit {
     users: User[] = [];
     selectedUsers: User[] = [];
+    userDialog: boolean = false;
+    user: User = {} as User;
+    selectedRole: Role | null = null;
+    availableRoles: Role[] = [
+        { id: 1, name: 'ROLE_ADMIN' },
+        { id: 2, name: 'ROLE_SECRETARY' },
+        { id: 3, name: 'ROLE_BOARD_MEMBER' }
+    ];
 
     constructor(
         private usersService: UsersService,
-        private confirmationService: ConfirmationService
+        private confirmationService: ConfirmationService,
+        private messageService: MessageService
     ) { }
 
-    ngOnInit(): void {
+    ngOnInit() {
         this.loadUsers();
     }
 
@@ -78,12 +121,45 @@ export class AdminCrudComponent implements OnInit {
             error: (err) => console.error('Error loading users', err)
         });
     }
-    getRoleNames(user: User): string {
-        return user.roles.map(r => r.name).join(', ');
+
+    openNew() {
+        this.user = {} as User;
+        this.selectedRole = null;
+        this.userDialog = true;
     }
-    onGlobalFilter(table: Table, event: Event) {
-        table.filterGlobal((event.target as HTMLInputElement).value, 'contains');
+
+    hideDialog() {
+        this.userDialog = false;
     }
+
+    saveUser() {
+        if (this.selectedRole) {
+            this.user.roles = [this.selectedRole];
+            this.usersService.create(this.user).subscribe({
+                next: (newUser) => {
+                    this.users.push(newUser);
+                    this.messageService.add({
+                        severity: 'success',
+                        summary: 'Success',
+                        detail: 'User created successfully'
+                    });
+                    this.userDialog = false;
+                },
+                error: (err) => {
+                    this.messageService.add({
+                        severity: 'error',
+                        summary: 'Error',
+                        detail: 'Failed to create user'
+                    });
+                }
+            });
+        }
+    }
+
+    getRoleName(user: User): string {
+        return user.roles.length > 0 ? user.roles[0].name : '';
+    }
+
     confirmDelete(user: User) {
         this.confirmationService.confirm({
             message: `Are you sure you want to delete ${user.fullName}?`,
@@ -127,5 +203,9 @@ export class AdminCrudComponent implements OnInit {
                 });
             }
         });
+    }
+
+    onGlobalFilter(table: Table, event: Event) {
+        table.filterGlobal((event.target as HTMLInputElement).value, 'contains');
     }
 }

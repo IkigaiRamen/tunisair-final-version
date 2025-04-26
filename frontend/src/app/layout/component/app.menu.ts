@@ -41,7 +41,8 @@ export class AppMenu {
                 label: 'Decisions & Tasks',
                 items: [
                     { label: 'Decisions Log', icon: 'pi pi-fw pi-file-edit', routerLink: ['/decisions-tasks/decisions'] },
-                    { label: 'Tasks Dashboard', icon: 'pi pi-fw pi-check-square', routerLink: ['/decisions-tasks/tasks'] }
+                    { label: 'Tasks Dashboard', icon: 'pi pi-fw pi-check-square', routerLink: ['/decisions-tasks/tasks'] },
+                    { label: 'My Decisions & Tasks ', icon: 'pi pi-fw pi-check-square', routerLink: ['/decisions-tasks/my-decisions-tasks'] }
                 ]
             },
             {
