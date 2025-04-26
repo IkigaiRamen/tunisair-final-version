@@ -42,7 +42,9 @@ public class Meeting {
 
     @JsonIgnoreProperties({ "hibernateLazyInitializer", "handler", "password", "roles" })
     @ManyToMany(fetch = FetchType.EAGER)
-    @JoinTable(name = "meeting_participants", joinColumns = @JoinColumn(name = "meeting_id"), inverseJoinColumns = @JoinColumn(name = "user_id"))
+    @JoinTable(name = "meeting_participants",
+            joinColumns = @JoinColumn(name = "meeting_id"),
+            inverseJoinColumns = @JoinColumn(name = "user_id"))
     private Set<User> participants = new HashSet<>();
 
     @JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
