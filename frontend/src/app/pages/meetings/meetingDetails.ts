@@ -26,6 +26,8 @@ import { TasksService } from '../../core/services/tasks.service';
 import { UsersService } from '../../core/services/users.service';
 import { DocumentsService } from '../../core/services/documents.service';
 import { SelectModule } from 'primeng/select';
+import { ConfirmationService } from 'primeng/api';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
 
 @Component({
     selector: 'app-meeting-details',
@@ -45,7 +47,8 @@ import { SelectModule } from 'primeng/select';
         MultiSelectModule,
         ToastModule,
         FileUploadModule,
-        SelectModule
+        SelectModule,
+        ConfirmDialogModule
     ],
     template: `
         <div class="grid grid-cols-12 gap-8">
@@ -266,9 +269,60 @@ import { SelectModule } from 'primeng/select';
             </ng-template>
         </p-dialog>
 
+        <!-- Meeting Edit Dialog -->
+        <p-dialog [(visible)]="meetingDialog" [style]="{ width: '600px' }" header="Edit Meeting" [modal]="true" 
+                  [draggable]="false" [resizable]="false" styleClass="p-fluid">
+            <ng-template #content>
+                <div class="flex flex-col gap-6">
+                    <div class="field">
+                        <label for="title" class="block font-bold mb-2">Title</label>
+                        <input type="text" pInputText fluid id="title" [(ngModel)]="editingMeeting.title" required autofocus />
+                        <small class="text-red-500" *ngIf="submitted && !editingMeeting.title">Title is required.</small>
+                    </div>
+
+                    <div class="field">
+                        <label for="agenda" class="block font-bold mb-2">Agenda</label>
+                        <textarea pTextarea fluid id="agenda" [(ngModel)]="editingMeeting.agenda" required rows="3" 
+                                  placeholder="Enter meeting agenda..."></textarea>
+                    </div>
+
+                    <div class="field">
+                        <label for="objectives" class="block font-bold mb-2">Objectives</label>
+                        <textarea pTextarea fluid id="objectives" [(ngModel)]="editingMeeting.objectives" required rows="3" 
+                                  placeholder="Enter meeting objectives..."></textarea>
+                    </div>
+                    <div class="field">
+                        <label for="participants" class="block font-bold mb-2">Participants</label>
+                        <p-multiSelect [options]="userList" [(ngModel)]="editingMeeting.participants" 
+                                     optionLabel="fullName" placeholder="Select Participants" 
+                                     display="chip" class="w-full"
+                                     [scrollHeight]="'200px'"
+                                     [panelStyle]="{'min-width': '100%'}"
+                                     [style]="{'width': '100%'}"
+                                     [virtualScroll]="true"
+                                     [virtualScrollItemSize]="34"
+                                     appendTo="body" />
+                    </div>
+                    <div class="field">
+                        <label for="dateTime" class="block font-bold mb-2">Date & Time</label>
+                        <p-calendar fluid [(ngModel)]="editingMeeting.dateTime" [showTime]="true" hourFormat="24" 
+                                   dateFormat="yy-mm-dd" [showIcon]="true" class="w-full" />
+                    </div>
+                </div>
+            </ng-template>
+
+            <ng-template #footer>
+                <div class="flex justify-end gap-2">
+                    <p-button label="Cancel" icon="pi pi-times" text (click)="hideDialog()" />
+                    <p-button label="Save" icon="pi pi-check" (click)="saveMeeting()" />
+                </div>
+            </ng-template>
+        </p-dialog>
+
         <p-toast></p-toast>
+        <p-confirmdialog [style]="{ width: '450px' }" />
     `,
-    providers: [MessageService, MeetingsService, DecisionsService, TasksService, UsersService, DocumentsService]
+    providers: [MessageService, MeetingsService, DecisionsService, TasksService, UsersService, DocumentsService, ConfirmationService]
 })
 export class MeetingDetailsComponent implements OnInit {
     meeting: Meeting | null = null;
@@ -280,10 +334,13 @@ export class MeetingDetailsComponent implements OnInit {
     // Dialog states
     decisionDialog: boolean = false;
     taskDialog: boolean = false;
+    meetingDialog: boolean = false;
+    submitted: boolean = false;
 
     // Form objects
     decision: Decision = {} as Decision;
     task: Task = {} as Task;
+    editingMeeting: Meeting = {} as Meeting;
 
     // Task status options
     taskStatuses = [
@@ -300,7 +357,8 @@ export class MeetingDetailsComponent implements OnInit {
         private tasksService: TasksService,
         private usersService: UsersService,
         private documentsService: DocumentsService,
-        private messageService: MessageService
+        private messageService: MessageService,
+        private confirmationService: ConfirmationService
     ) {}
 
     ngOnInit() {
@@ -627,8 +685,50 @@ export class MeetingDetailsComponent implements OnInit {
     }
 
     editMeeting() {
-        // Navigate to edit meeting page
-        this.router.navigate(['/meetings/edit', this.meeting?.id]);
+        if (this.meeting) {
+            this.editingMeeting = { ...this.meeting };
+            this.meetingDialog = true;
+        }
+    }
+
+    hideDialog() {
+        this.meetingDialog = false;
+        this.submitted = false;
+    }
+
+    saveMeeting() {
+        this.submitted = true;
+
+        if (this.editingMeeting.title?.trim()) {
+            this.confirmationService.confirm({
+                message: 'Are you sure you want to save the changes to this meeting?',
+                header: 'Confirm Update',
+                icon: 'pi pi-exclamation-triangle',
+                accept: () => {
+                    this.meetingsService.update(this.editingMeeting.id, this.editingMeeting).subscribe({
+                        next: (updatedMeeting) => {
+                            this.meeting = updatedMeeting;
+                            this.messageService.add({
+                                severity: 'success',
+                                summary: 'Success',
+                                detail: 'Meeting updated successfully',
+                                life: 3000
+                            });
+                            this.meetingDialog = false;
+                        },
+                        error: (error) => {
+                            console.error('Error updating meeting:', error);
+                            this.messageService.add({
+                                severity: 'error',
+                                summary: 'Error',
+                                detail: error.error?.message || 'Failed to update meeting. You may not have the required permissions.',
+                                life: 3000
+                            });
+                        }
+                    });
+                }
+            });
+        }
     }
 
     deleteMeeting() {

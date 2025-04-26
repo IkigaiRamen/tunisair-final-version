@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
-import { TableModule } from 'primeng/table';
+import { Table, TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { InputTextModule } from 'primeng/inputtext';
 import { IconFieldModule } from 'primeng/iconfield';
@@ -48,20 +48,24 @@ import { RouterModule } from '@angular/router';
                             <div class="field">
                                 <label for="startDate" class="block font-bold mb-2">Start Date</label>
                                 <p-calendar [(ngModel)]="startDate" [showIcon]="true" dateFormat="yy-mm-dd" 
+                                           [showButtonBar]="true" [showTime]="false" [readonlyInput]="true"
                                            styleClass="w-full" />
                             </div>
                             <div class="field">
                                 <label for="endDate" class="block font-bold mb-2">End Date</label>
                                 <p-calendar [(ngModel)]="endDate" [showIcon]="true" dateFormat="yy-mm-dd" 
+                                           [showButtonBar]="true" [showTime]="false" [readonlyInput]="true"
                                            styleClass="w-full" />
                             </div>
-                            <div class="field flex items-end">
-                                <p-button label="Filter" icon="pi pi-filter" (onClick)="filterMeetings()" />
+                            <div class="field flex items-end gap-2">
+                                <p-button label="Filter" icon="pi pi-filter" (onClick)="filterMeetings()"></p-button>
+                                <p-button label="Clear Filters" icon="pi pi-times" severity="secondary" 
+                                         (onClick)="clearFilters()"></p-button>
                             </div>
                         </div>
                     </div>
 
-                    <p-table [value]="meetings" [paginator]="true" [rows]="10" [showCurrentPageReport]="true"
+                    <p-table #dt [value]="filteredMeetings" [paginator]="true" [rows]="10" [showCurrentPageReport]="true"
                             currentPageReportTemplate="Showing {first} to {last} of {totalRecords} meetings"
                             [rowsPerPageOptions]="[10,25,50]" [globalFilterFields]="['title','createdBy.fullName']"
                             styleClass="p-datatable-sm">
@@ -126,8 +130,10 @@ import { RouterModule } from '@angular/router';
 })
 export class MeetingSummariesComponent implements OnInit {
     meetings: Meeting[] = [];
+    filteredMeetings: Meeting[] = [];
     startDate: Date | null = null;
     endDate: Date | null = null;
+    searchText: string = '';
 
     constructor(
         private meetingsService: MeetingsService,
@@ -143,6 +149,7 @@ export class MeetingSummariesComponent implements OnInit {
         this.meetingsService.list().subscribe({
             next: (meetings) => {
                 this.meetings = meetings;
+                this.filteredMeetings = [...meetings];
             },
             error: (error) => {
                 this.messageService.add({
@@ -155,14 +162,39 @@ export class MeetingSummariesComponent implements OnInit {
     }
 
     filterMeetings() {
+        let filtered = [...this.meetings];
+
+        // Apply date filter if dates are selected
         if (this.startDate && this.endDate) {
-            // Implement date filtering logic
+            const start = new Date(this.startDate);
+            const end = new Date(this.endDate);
+            
+            // Reset the time part to ensure proper date comparison
+            start.setHours(0, 0, 0, 0);
+            end.setHours(23, 59, 59, 999);
+
+            filtered = filtered.filter(meeting => {
+                const meetingDate = new Date(meeting.dateTime);
+                return meetingDate >= start && meetingDate <= end;
+            });
         }
+
+        // Apply search filter if search text exists
+        if (this.searchText) {
+            const searchLower = this.searchText.toLowerCase();
+            filtered = filtered.filter(meeting => 
+                meeting.title.toLowerCase().includes(searchLower) ||
+                meeting.createdBy?.fullName?.toLowerCase().includes(searchLower)
+            );
+        }
+
+        this.filteredMeetings = filtered;
     }
 
     onGlobalFilter(event: Event) {
         const value = (event.target as HTMLInputElement).value;
-        // Implement filtering logic
+        this.searchText = value;
+        this.filterMeetings();
     }
 
     exportPDF() {
@@ -216,5 +248,12 @@ export class MeetingSummariesComponent implements OnInit {
             default:
                 return 'info';
         }
+    }
+
+    clearFilters() {
+        this.startDate = null;
+        this.endDate = null;
+        this.searchText = '';
+        this.filteredMeetings = [...this.meetings];
     }
 } 
