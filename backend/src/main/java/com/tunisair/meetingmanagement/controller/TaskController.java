@@ -100,12 +100,12 @@ public class TaskController {
         @ApiResponse(responseCode = "200", description = "Successfully retrieved decision tasks"),
         @ApiResponse(responseCode = "403", description = "Access denied")
     })
+
     @GetMapping("/decision/{decisionId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'SECRETARY', 'BOARD_MEMBER')")
-    public ResponseEntity<List<Task>> getTasksByDecision(@PathVariable Long decisionId) {
-        Decision decision = decisionService.getDecisionById(decisionId)
-                .orElseThrow(() -> new RuntimeException("Decision not found"));
-        return ResponseEntity.ok(taskService.getTasksByDecision(decision));
+    public ResponseEntity<List<Task>> getTasksByDecisionId(@PathVariable Long decisionId) {
+        List<Task> tasks = taskService.getTaskByDecisionId(decisionId);
+        return ResponseEntity.ok(tasks);
     }
 
     @Operation(summary = "Get tasks by assigned user")

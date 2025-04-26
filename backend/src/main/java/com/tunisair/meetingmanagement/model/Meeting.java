@@ -16,6 +16,7 @@ import java.util.Set;
 @NoArgsConstructor
 @Entity
 @Table(name = "meetings")
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Meeting {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

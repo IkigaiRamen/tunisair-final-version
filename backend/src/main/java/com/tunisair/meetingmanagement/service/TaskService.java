@@ -14,7 +14,11 @@ public interface TaskService {
     Task createTask(Task task);
     Task updateTask(Long id, Task taskDetails);
     void deleteTask(Long id);
+    List<Task> getTasksByDecisionId(Long id);
     List<Task> getTasksByDecision(Decision decision);
+
+    List<Task> getTaskByDecisionId(Long id);
+
     List<Task> getTasksByAssignedUser(User user);
     List<Task> getTasksByStatus(Task.TaskStatus status);
     List<Task> getTasksByDeadlineRange(LocalDateTime start, LocalDateTime end);

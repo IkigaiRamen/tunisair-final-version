@@ -1,0 +1,79 @@
+
+TUNISAIR MEETING MANAGEMENT WEB APPLICATION – BACKEND DEVELOPMENT PLAN (SPRING BOOT)
+=====================================================================================
+
+🔧 PROJECT SETUP
+---------------
+1. Create a Spring Boot project with dependencies:
+   - Spring Web, Spring Data JPA, MySQL Driver
+   - Spring Security, JWT (jjwt or Java JWT)
+   - Spring Boot DevTools, Lombok (optional)
+2. Configure `application.yml` with database connection and JPA properties.
+
+📦 ENTITY MODELS (JPA)
+---------------------
+1. User: id, fullName, email, password, roles (ManyToMany)
+2. Role: id, name (ADMIN, SECRETARY, BOARD_MEMBER)
+3. Meeting: id, title, agenda, objectives, dateTime, createdBy, participants (ManyToMany)
+4. Document: id, name, type, version, path, meeting (ManyToOne), uploadedBy
+5. Decision: id, content, meeting (ManyToOne), responsibleUser, deadline, createdAt
+6. Task: id, description, status (IN_PROGRESS, COMPLETED, PENDING), decision, assignedTo, deadline
+7. NotificationLog (optional): id, userId, message, sentAt, type (EMAIL, SYSTEM)
+
+🧩 REPOSITORIES (Spring Data JPA)
+---------------------------------
+- UserRepository
+- RoleRepository
+- MeetingRepository
+- DocumentRepository
+- DecisionRepository
+- TaskRepository
+
+🧠 SERVICES (Business Logic Layer)
+----------------------------------
+1. AuthService: register/login users, issue JWTs
+2. UserService: get current user, list by role
+3. MeetingService: create/update/list meetings, add participants
+4. DocumentService: upload/download, enforce role access, handle versioning
+5. DecisionService: record decisions per meeting
+6. TaskService: assign/update tasks, filter by user/status
+7. NotificationService: email reminders
+8. ReportService: export meeting summaries (PDF/Excel)
+
+🌐 CONTROLLERS (API Layer)
+---------------------------
+- AuthController (/api/auth)
+- UserController (/api/users)
+- MeetingController (/api/meetings)
+- DocumentController (/api/documents)
+- DecisionController (/api/decisions)
+- TaskController (/api/tasks)
+- ReportController (/api/reports)
+
+🔐 SECURITY (Spring Security + JWT)
+-----------------------------------
+- JWTUtil: generate/validate tokens
+- JWTFilter: intercept and validate requests
+- SecurityConfig: configure HTTP security, add role-based access
+- Use `@PreAuthorize("hasRole('ROLE_ADMIN')")` to protect endpoints
+- Role Hierarchy: ADMIN > SECRETARY > BOARD_MEMBER
+
+🛠️ UTILITIES & SUPPORT MODULES
+-------------------------------
+- FileStorageService: manage uploads, paths, and versioning
+- EmailService: use JavaMailSender to send invitations/reminders
+- Scheduler: use `@Scheduled` for task/meeting reminders
+
+✅ IMPLEMENTATION ORDER
+-----------------------
+1. Set up Spring Boot structure and dependencies
+2. Define all entities and create JPA repositories
+3. Implement JWT-based authentication and role management
+4. Create services for meetings, users, tasks, etc.
+5. Build controllers for all features
+6. Implement file storage and document versioning
+7. Add scheduled email notifications
+8. Generate reports (PDF/Excel) for meetings
+9. Final touches: Swagger/OpenAPI, CORS config, validations
+
+This development plan ensures a modular, secure, and maintainable backend system for the Tunisair Meeting Management Web Application.

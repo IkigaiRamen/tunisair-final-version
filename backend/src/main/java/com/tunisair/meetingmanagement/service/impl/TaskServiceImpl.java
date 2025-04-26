@@ -33,8 +33,15 @@ public class TaskServiceImpl implements TaskService {
 
     @Override
     public Task createTask(Task task) {
+        // Check if task has a decision and add this task to the decision's task list
+        if (task.getDecision() != null) {
+            task.getDecision().getTasks().add(task); // Add task to the decision's tasks collection
+        }
+
+        // Save the task and return it
         return taskRepository.save(task);
     }
+
 
     @Override
     public Task updateTask(Long id, Task taskDetails) {
@@ -60,6 +67,11 @@ public class TaskServiceImpl implements TaskService {
     }
 
     @Override
+    public List<Task> getTaskByDecisionId(Long id) {
+        return taskRepository.findByDecisionId(id);
+    }
+
+    @Override
     public List<Task> getTasksByAssignedUser(User user) {
         return taskRepository.findByAssignedTo(user);
     }
@@ -72,6 +84,10 @@ public class TaskServiceImpl implements TaskService {
     @Override
     public List<Task> getTasksByDeadlineRange(LocalDateTime start, LocalDateTime end) {
         return taskRepository.findByDeadlineBetween(start, end);
+    }
+
+    public List<Task> getTasksByDecisionId(Long decisionId) {
+        return taskRepository.findByDecisionId(decisionId);  // Adjust according to your repository query method
     }
 
     @Override

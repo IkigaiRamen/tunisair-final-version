@@ -7,6 +7,8 @@ import com.tunisair.meetingmanagement.repository.DecisionRepository;
 import com.tunisair.meetingmanagement.repository.UserRepository;
 import com.tunisair.meetingmanagement.service.DecisionService;
 import lombok.RequiredArgsConstructor;
+import org.hibernate.Hibernate;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -35,7 +37,12 @@ public class DecisionServiceImpl implements DecisionService {
     @Transactional
     public Decision createDecision(Decision decision) {
         decision.setCreatedAt(LocalDateTime.now());
-        return decisionRepository.save(decision);
+        Decision saved = decisionRepository.save(decision);
+
+        Hibernate.initialize(saved.getMeeting()); // avoid proxy errors
+        Hibernate.initialize(saved.getResponsibleUser());
+
+        return saved;
     }
 
     @Override
@@ -61,8 +68,10 @@ public class DecisionServiceImpl implements DecisionService {
     }
 
     @Override
+    @Transactional
+    @EntityGraph(attributePaths = "tasks")  // Ensure tasks are fetched eagerly with decisions
     public List<Decision> getDecisionsByMeeting(Meeting meeting) {
-        return decisionRepository.findByMeeting(meeting);
+        return decisionRepository.findByMeeting(meeting); // Uses @EntityGraph
     }
 
     @Override
