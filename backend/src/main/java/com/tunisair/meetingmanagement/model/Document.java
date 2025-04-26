@@ -1,5 +1,6 @@
 package com.tunisair.meetingmanagement.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -12,6 +13,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @Entity
 @Table(name = "documents")
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Document {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -31,12 +33,13 @@ public class Document {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "meeting_id")
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private Meeting meeting;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "uploaded_by_id")
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private User uploadedBy;
-
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
@@ -45,6 +48,7 @@ public class Document {
 
     @Column(columnDefinition = "TEXT")
     private String description;
-
+    
+    @Column(name = "size")
     private Long size;
 } 

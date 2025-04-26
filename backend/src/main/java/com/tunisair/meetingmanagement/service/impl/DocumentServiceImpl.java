@@ -39,10 +39,22 @@ public class DocumentServiceImpl implements DocumentService {
     @Override
     @Transactional
     public Document uploadDocument(MultipartFile file, Meeting meeting, User uploadedBy) {
+        if (file == null || file.isEmpty()) {
+            throw new RuntimeException("Uploaded file is empty or null");
+        }
+
         try {
+            Files.createDirectories(fileStorageLocation); // ✅ Ensure directory exists
+
             String fileName = UUID.randomUUID().toString() + "_" + file.getOriginalFilename();
             Path targetLocation = fileStorageLocation.resolve(fileName);
-            Files.copy(file.getInputStream(), targetLocation);
+
+            // 🐞 Debug logs
+            System.out.println("Uploading file: " + file.getOriginalFilename());
+            System.out.println("Resolved path: " + targetLocation);
+            System.out.println("File storage location: " + fileStorageLocation.toAbsolutePath());
+
+            Files.copy(file.getInputStream(), targetLocation); // 🧱 File copy
 
             Document document = new Document();
             document.setName(file.getOriginalFilename());
@@ -52,13 +64,14 @@ public class DocumentServiceImpl implements DocumentService {
             document.setMeeting(meeting);
             document.setUploadedBy(uploadedBy);
             document.setCreatedAt(LocalDateTime.now());
+            document.setSize(file.getSize());
 
             return documentRepository.save(document);
         } catch (IOException ex) {
+            ex.printStackTrace(); // 🐞 Print detailed stack trace
             throw new RuntimeException("Could not store file. Please try again!", ex);
         }
     }
-
     @Override
     @Transactional
     public Document updateDocument(Long id, Document documentDetails) {

@@ -1,0 +1,113 @@
+
+TUNISAIR MEETING MANAGEMENT WEB APPLICATION – DEVELOPMENT PLAN
+Generated: April 20, 2025
+
+===========================================================
+📦 PROJECT OVERVIEW
+-----------------------------------------------------------
+Tech Stack:
+- Frontend: Angular + PrimeNG + PrimeFlex
+- Backend: Spring Boot (Controller-Service-Repository Pattern)
+- Database: MySQL
+- API: RESTful
+- Security: Spring Security + JWT
+
+===========================================================
+🚀 STEP-BY-STEP DEVELOPMENT PLAN
+===========================================================
+
+1. 🔧 Project Initialization
+---------------------------
+Backend:
+- Set up Spring Boot project with Web, JPA, MySQL, Security, JWT
+- Set up MySQL schema
+- Create basic User/Role entities
+- Add JWT-based login/registration APIs
+
+Frontend:
+- Create Angular project
+- Install PrimeNG, PrimeFlex, and PrimeIcons
+- Set up folder structure (/auth, /meetings, /documents, etc.)
+
+2. 🔐 Authentication & Role-Based Access
+---------------------------------------
+Backend:
+- JWT authentication
+- Role-based access using Spring Security
+
+Frontend:
+- Login UI with PrimeNG components
+- AuthService to manage login state and JWT
+- Route Guards to protect views
+
+3. 📅 Meeting Management
+------------------------
+Backend:
+- Meeting entity: agenda, objectives, participants, datetime
+- Endpoints: Create, Read, Update, GetById
+
+Frontend:
+- Meeting list using DataTable
+- Meeting creation using Dialogs, Calendar, Dropdown, Chips
+
+4. 📄 Document Management
+-------------------------
+Backend:
+- Document entity: filename, type, version, uploader
+- Upload/download endpoints with role restrictions
+
+Frontend:
+- Document upload with FileUpload
+- List view with versioning (expandable rows)
+- Role-based access
+
+5. 📋 Decision & Task Tracking
+------------------------------
+Backend:
+- Entities: Decision, Task
+- Link decisions to meetings and tasks to decisions
+- Endpoints for CRUD and user-specific queries
+
+Frontend:
+- Input decisions in meeting details
+- Track tasks with Dashboard view using Timeline/Steps
+- Allow updates to task status
+
+6. 🔔 Notifications & Reminders
+-------------------------------
+Backend:
+- Daily cron jobs for reminders (meeting & task deadlines)
+- Send emails via JavaMailSender
+
+Frontend:
+- Notification bar using Toast/Messages
+- Reminder panel on dashboard
+
+7. 📊 Reports & Exporting
+--------------------------
+Backend:
+- Generate PDF/Excel reports (iText/Apache POI)
+- Endpoints for downloading reports
+
+Frontend:
+- Report viewer (PDF) & Export buttons (SplitButton)
+
+8. 🌐 Deployment
+----------------
+- Backend: Build JAR and deploy on server/cloud
+- Frontend: Build Angular app and serve via NGINX/Apache
+
+===========================================================
+✅ SUMMARY OF DEVELOPMENT SEQUENCE
+===========================================================
+
+| Step | Module               | Frontend Components         | Backend Services & Endpoints      |
+|------|----------------------|------------------------------|------------------------------------|
+| 1    | Initialization        | Project setup               | Spring Boot + MySQL setup         |
+| 2    | Auth & Roles          | Login, guards               | JWT + Role-based security         |
+| 3    | Meeting Management    | List, Create, Edit views    | CRUD meetings                     |
+| 4    | Document Management   | Upload, List, Versions      | Upload, download, access control  |
+| 5    | Decisions & Tasks     | Trackers, Timeline          | CRUD decisions/tasks              |
+| 6    | Notifications         | Toasts, Dashboards          | Email reminders (cron jobs)       |
+| 7    | Reports & Export      | Export, Viewer              | Report generation & download      |
+| 8    | Deployment            | Build & deploy              | Package and serve                 |

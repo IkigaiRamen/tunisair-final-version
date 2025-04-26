@@ -109,7 +109,7 @@ public class DocumentController {
         @ApiResponse(responseCode = "403", description = "Access denied")
     })
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SECRETARY')")
     public ResponseEntity<Void> deleteDocument(@PathVariable Long id) {
         documentService.deleteDocument(id);
         return ResponseEntity.ok().build();
