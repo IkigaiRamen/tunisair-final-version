@@ -19,6 +19,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/reports")
@@ -37,14 +38,33 @@ public class ReportController {
         @ApiResponse(responseCode = "404", description = "Meeting not found"),
         @ApiResponse(responseCode = "403", description = "Access denied")
     })
-    @GetMapping("/meeting/{meetingId}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'SECRETARY')")
-    public ResponseEntity<byte[]> generateMeetingReport(@PathVariable Long meetingId) {
-        Meeting meeting = meetingService.getMeetingById(meetingId)
-                .orElseThrow(() -> new RuntimeException("Meeting not found"));
-        byte[] report = reportService.generateMeetingReport(meeting);
-        return createResponseEntity(report, "meeting_report.pdf");
+    @GetMapping("/meeting/{id}/report")
+    public ResponseEntity<byte[]> downloadMeetingReport(
+            @PathVariable Long id,
+            @RequestParam(defaultValue = "xlsx") String format
+    ) {
+        Optional<Meeting> meeting = meetingService.getMeetingById(id);
+
+        byte[] report;
+        String filename;
+        MediaType mediaType;
+
+        if ("pdf".equalsIgnoreCase(format)) {
+            report = reportService.generateMeetingReportPDF(meeting);
+            filename = "meeting_report.pdf";
+            mediaType = MediaType.APPLICATION_PDF;
+        } else {
+            report = reportService.generateMeetingReportExcel(meeting);
+            filename = "meeting_report.xlsx";
+            mediaType = MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        }
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + filename)
+                .contentType(mediaType)
+                .body(report);
     }
+
 
     @Operation(summary = "Generate user activity report")
     @ApiResponses(value = {
