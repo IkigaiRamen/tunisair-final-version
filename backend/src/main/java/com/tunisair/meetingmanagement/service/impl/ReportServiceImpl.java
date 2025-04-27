@@ -150,7 +150,6 @@ public class ReportServiceImpl implements ReportService {
     }
 
     @Override
-    @Override
     public byte[] generateAllMeetingsReportPDF() {
         try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
             PdfWriter writer = new PdfWriter(outputStream);
