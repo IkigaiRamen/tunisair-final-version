@@ -80,15 +80,7 @@ export class AppMenu {
             }
         ];
     
-        const secretaryMenuItems: MenuItem[] = [
-            {
-                label: 'Documents',
-                items: [
-                    // Removed the "Upload Document" option from here
-                ]
-            }
-        ];
-    
+        
         // Add role-specific menu items
         switch (this.userRole) {
             case 'ROLE_ADMIN':
@@ -98,7 +90,7 @@ export class AppMenu {
                     icon: 'pi pi-fw pi-plus',
                     routerLink: ['/meetings/new']
                 });
-                this.model = [...commonMenuItems, ...adminMenuItems, ...secretaryMenuItems];
+                this.model = [...commonMenuItems, ...adminMenuItems, ];
                 break;
             case 'ROLE_SECRETARY':
                 // Secretary can see "Plan New Meeting" inside the "Meetings" section
@@ -107,7 +99,7 @@ export class AppMenu {
                     icon: 'pi pi-fw pi-plus',
                     routerLink: ['/meetings/new']
                 });
-                this.model = [...commonMenuItems, ...secretaryMenuItems];
+                this.model = [...commonMenuItems, ];
                 break;
             case 'ROLE_BOARD_MEMBER':
                 this.model = [...commonMenuItems];
