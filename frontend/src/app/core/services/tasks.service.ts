@@ -23,9 +23,14 @@ export class TasksService {
     return this.api.put<Task>(`/tasks/${id}`, data);
   }
 
+  updateStatus(id: number, status: string): Observable<Task> {
+    return this.api.put<Task>(`/tasks/${id}/status?status=${status}`, null);
+  }
+
   delete(id: number): Observable<void> {
     return this.api.delete<void>(`/tasks/${id}`);
   }
+
   getTasksByDecision(id: number): Observable<Task[]> {
     return this.api.get<Task[]>(`/decisions/${id}`);
   }

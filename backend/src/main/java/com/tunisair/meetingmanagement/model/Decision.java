@@ -15,7 +15,12 @@ import java.util.Set;
 @NoArgsConstructor
 @Entity
 @Table(name = "decisions")
-@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+@JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
+@NamedEntityGraph(name = "Decision.withTasks", attributeNodes = {
+        @NamedAttributeNode("tasks"),
+        @NamedAttributeNode("meeting"),
+        @NamedAttributeNode("responsibleUser")
+})
 public class Decision {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -43,4 +48,4 @@ public class Decision {
 
     @OneToMany(mappedBy = "decision", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<Task> tasks = new HashSet<>();
-} 
+}

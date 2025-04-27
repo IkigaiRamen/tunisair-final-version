@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { ApiService } from './api.service';
 import { User } from '../models/user.model';
+import { catchError } from 'rxjs/operators';
 
 @Injectable({ providedIn: 'root' })
 export class UsersService {
@@ -20,7 +21,19 @@ export class UsersService {
   }
 
   update(id: number, user: User): Observable<User> {
-    return this.api.put<User>(`/users/${id}`, user);
+    // Only send the necessary fields for password update
+    const updateData = {
+        fullName: user.fullName,
+        email: user.email,
+        password: user.password
+    };
+
+    return this.api.put<User>(`/users/${id}`, updateData).pipe(
+        catchError(error => {
+            console.error('Error updating user:', error);
+            throw error;
+        })
+    );
   }
 
   delete(id: number): Observable<void> {

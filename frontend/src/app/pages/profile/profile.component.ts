@@ -10,6 +10,7 @@ import { TabViewModule } from 'primeng/tabview';
 import { DividerModule } from 'primeng/divider';
 import { MessageService } from 'primeng/api';
 import { AuthService } from '../../core/services/auth.service';
+import { UsersService } from '../../core/services/users.service';
 import { User } from '../../core/models/user.model';
 import { Router } from '@angular/router';
 
@@ -61,59 +62,71 @@ import { Router } from '@angular/router';
             <div *ngIf="isEditMode" class="surface-card p-5 border-round-xl shadow-2 mb-5">
                 <form [formGroup]="profileForm" (ngSubmit)="onSubmit()" class="flex flex-column gap-5">
                     <!-- Personal Info Section -->
-                    <div class="section-header">
-                        <i class="pi pi-user text-primary text-2xl"></i>
-                        <h3 class="text-2xl font-medium m-0">Personal Information</h3>
-                    </div>
-                    
-                    <div class="form-section">
-                        <div class="form-field">
-                            <label for="fullName" class="block text-900 font-medium mb-3 text-xl">Full Name</label>
-                            <input id="fullName" type="text" pInputText formControlName="fullName" 
-                                   class="w-full p-3 border-round-xl" />
-                            <small class="text-red-500 block mt-2" *ngIf="profileForm.get('fullName')?.invalid && profileForm.get('fullName')?.touched">
-                                Full name is required
-                            </small>
+                    <div class="flex flex-column gap-4">
+                        <div class="flex align-items-center gap-3">
+                            <i class="pi pi-user text-primary text-2xl"></i>
+                            <h3 class="text-2xl font-medium m-0">Personal Information</h3>
                         </div>
-                        <div class="form-field mt-5">
-                            <label for="email" class="block text-900 font-medium mb-3 text-xl">Email</label>
-                            <input id="email" type="email" pInputText formControlName="email" 
-                                   class="w-full p-3 border-round-xl" />
-                            <small class="text-red-500 block mt-2" *ngIf="profileForm.get('email')?.invalid && profileForm.get('email')?.touched">
-                                Please enter a valid email
-                            </small>
+                        
+                        <div class="grid">
+                            <div class="col-12 md:col-6">
+                                <div class="field">
+                                    <label for="fullName" class="block text-900 font-medium mb-2">Full Name</label>
+                                    <input id="fullName" type="text" pInputText formControlName="fullName" 
+                                           class="w-full" />
+                                    <small class="text-red-500 block mt-2" *ngIf="profileForm.get('fullName')?.invalid && profileForm.get('fullName')?.touched">
+                                        Full name is required
+                                    </small>
+                                </div>
+                            </div>
+                            <div class="col-12 md:col-6">
+                                <div class="field">
+                                    <label for="email" class="block text-900 font-medium mb-2">Email</label>
+                                    <input id="email" type="email" pInputText formControlName="email" 
+                                           class="w-full" />
+                                    <small class="text-red-500 block mt-2" *ngIf="profileForm.get('email')?.invalid && profileForm.get('email')?.touched">
+                                        Please enter a valid email
+                                    </small>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
                     <!-- Password Section -->
-                    <div class="section-header mt-5">
-                        <i class="pi pi-lock text-primary text-2xl"></i>
-                        <h3 class="text-2xl font-medium m-0">Change Password</h3>
-                    </div>
-                    <div class="form-section">
-                        <div class="form-field">
-                            <label for="currentPassword" class="block text-900 font-medium mb-3 text-xl">Current Password</label>
-                            <p-password id="currentPassword" formControlName="currentPassword" [toggleMask]="true" 
-                                      [feedback]="false" styleClass="w-full" inputStyleClass="w-full p-3 border-round-xl"></p-password>
-                            <small class="text-red-500 block mt-2" *ngIf="profileForm.get('currentPassword')?.invalid && profileForm.get('currentPassword')?.touched">
-                                Current password is required
-                            </small>
+                    <div class="flex flex-column gap-4">
+                        <div class="flex align-items-center gap-3">
+                            <i class="pi pi-lock text-primary text-2xl"></i>
+                            <h3 class="text-2xl font-medium m-0">Change Password</h3>
                         </div>
-                        <div class="form-field mt-5">
-                            <label for="newPassword" class="block text-900 font-medium mb-3 text-xl">New Password</label>
-                            <p-password id="newPassword" formControlName="newPassword" [toggleMask]="true" 
-                                      [feedback]="false" styleClass="w-full" inputStyleClass="w-full p-3 border-round-xl"></p-password>
-                            <small class="text-red-500 block mt-2" *ngIf="profileForm.get('newPassword')?.invalid && profileForm.get('newPassword')?.touched">
-                                New password must be at least 6 characters
-                            </small>
+                        <div class="grid">
+                            <div class="col-12 md:col-6">
+                                <div class="field">
+                                    <label for="currentPassword" class="block text-900 font-medium mb-2">Current Password</label>
+                                    <p-password id="currentPassword" formControlName="currentPassword" [toggleMask]="true" 
+                                              [feedback]="false" styleClass="w-full"></p-password>
+                                    <small class="text-red-500 block mt-2" *ngIf="profileForm.get('currentPassword')?.invalid && profileForm.get('currentPassword')?.touched">
+                                        Current password is required
+                                    </small>
+                                </div>
+                            </div>
+                            <div class="col-12 md:col-6">
+                                <div class="field">
+                                    <label for="newPassword" class="block text-900 font-medium mb-2">New Password</label>
+                                    <p-password id="newPassword" formControlName="newPassword" [toggleMask]="true" 
+                                              [feedback]="false" styleClass="w-full"></p-password>
+                                    <small class="text-red-500 block mt-2" *ngIf="profileForm.get('newPassword')?.invalid && profileForm.get('newPassword')?.touched">
+                                        New password must be at least 6 characters
+                                    </small>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
                     <div class="flex justify-content-end gap-3 mt-5">
                         <p-button type="button" label="Cancel" (onClick)="toggleEditMode()" 
-                                 styleClass="p-button-outlined p-button-rounded"></p-button>
+                                 styleClass="p-button-outlined"></p-button>
                         <p-button type="submit" label="Save Changes" [loading]="loading" 
-                                 styleClass="p-button-primary p-button-rounded"></p-button>
+                                 styleClass="p-button-primary"></p-button>
                     </div>
                 </form>
             </div>
@@ -294,6 +307,7 @@ export class ProfileComponent implements OnInit {
     constructor(
         private fb: FormBuilder,
         private authService: AuthService,
+        private usersService: UsersService,
         private messageService: MessageService,
         private router: Router
     ) {}
@@ -325,25 +339,63 @@ export class ProfileComponent implements OnInit {
     }
 
     onSubmit(): void {
-        if (this.profileForm.invalid) {
-            this.profileForm.markAllAsTouched();
-            return;
-        }
+        if (this.profileForm.valid) {
+            const currentPassword = this.profileForm.get('currentPassword')?.value;
+            const newPassword = this.profileForm.get('newPassword')?.value;
 
-        this.loading = true;
-        const formData = this.profileForm.value;
+            // First verify the current password
+            this.authService.verifyPassword(currentPassword).subscribe({
+                next: (isValid) => {
+                    console.log('Password verification result:', isValid);
+                    if (isValid) {
+                        // Prepare the update data
+                        const updateData = {
+                            ...this.user!,
+                            fullName: this.profileForm.get('fullName')?.value,
+                            email: this.profileForm.get('email')?.value,
+                            password: newPassword || undefined
+                        };
 
-        // Here you would typically call your API to update the profile
-        // For now, we'll just simulate a successful update
-        setTimeout(() => {
-            this.loading = false;
-            this.isEditMode = false;
-            this.messageService.add({
-                severity: 'success',
-                summary: 'Success',
-                detail: 'Profile updated successfully'
+                        // Update the user
+                        this.usersService.update(this.user!.id, updateData).subscribe({
+                            next: (updatedUser) => {
+                                this.user = updatedUser;
+                                this.authService.setUser(updatedUser);
+                                this.messageService.add({
+                                    severity: 'success',
+                                    summary: 'Success',
+                                    detail: 'Profile updated successfully'
+                                });
+                                this.isEditMode = false;
+                                this.profileForm.reset();
+                            },
+                            error: (error) => {
+                                console.error('Error updating profile:', error);
+                                this.messageService.add({
+                                    severity: 'error',
+                                    summary: 'Error',
+                                    detail: 'Error updating profile'
+                                });
+                            }
+                        });
+                    } else {
+                        this.messageService.add({
+                            severity: 'error',
+                            summary: 'Error',
+                            detail: 'Current password is incorrect'
+                        });
+                    }
+                },
+                error: (error) => {
+                    console.error('Error verifying password:', error);
+                    this.messageService.add({
+                        severity: 'error',
+                        summary: 'Error',
+                        detail: 'Error verifying password'
+                    });
+                }
             });
-        }, 1000);
+        }
     }
 
     logout(): void {

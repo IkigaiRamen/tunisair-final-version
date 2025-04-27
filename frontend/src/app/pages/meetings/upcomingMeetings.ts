@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { DataViewModule } from 'primeng/dataview';
@@ -10,6 +10,8 @@ import { TagModule } from 'primeng/tag';
 import { Meeting } from '../../core/models/meeting.model';
 import { MeetingsService } from '../../core/services/meetings.service';
 import { RouterModule } from '@angular/router';
+import { AuthService } from '../../core/services/auth.service';
+import { User } from '../../core/models/user.model';
 
 @Component({
     selector: 'app-upcoming-meeting',
@@ -113,24 +115,34 @@ import { RouterModule } from '@angular/router';
             }
         }
     `],
-    providers: [MeetingsService]
+    providers: [MeetingsService, AuthService]
 })
-export class upcomingMeetings {
+export class upcomingMeetings implements OnInit {
     layout: 'list' | 'grid' = 'list';
     options = ['list', 'grid'];
     meetings: Meeting[] = [];
+    currentUser: User | null = null;
 
-    constructor(private meetingsService: MeetingsService) {}
+    constructor(
+        private meetingsService: MeetingsService,
+        private authService: AuthService
+    ) {}
 
     ngOnInit(): void {
-        const start = new Date().toISOString();    
-        this.meetingsService.getUpcomingMeetings(start).subscribe(
-            (meetings: Meeting[]) => {
-                this.meetings = meetings;
-            },
-            (error: any) => {
-                console.error('Error fetching upcoming meetings:', error);
-            }
-        );
+        this.currentUser = this.authService.getUser();
+        if (this.currentUser) {
+            const start = new Date().toISOString();    
+            this.meetingsService.getUpcomingMeetings(start).subscribe(
+                (meetings: Meeting[]) => {
+                    // Filter meetings where the current user is a participant
+                    this.meetings = meetings.filter(meeting => 
+                        meeting.participants.some(participant => participant.id === this.currentUser?.id)
+                    );
+                },
+                (error: any) => {
+                    console.error('Error fetching upcoming meetings:', error);
+                }
+            );
+        }
     }
 }

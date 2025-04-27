@@ -103,9 +103,12 @@ public class DecisionController {
     @GetMapping("/meeting/{meetingId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'SECRETARY', 'BOARD_MEMBER')")
     public ResponseEntity<List<Decision>> getDecisionsByMeeting(@PathVariable Long meetingId) {
+        System.out.println("Fetching decisions for meeting ID: " + meetingId);
         Meeting meeting = meetingService.getMeetingById(meetingId)
-                .orElseThrow(() -> new RuntimeException("Meeting not found"));
-        return ResponseEntity.ok(decisionService.getDecisionsByMeeting(meeting));
+                .orElseThrow(() -> new RuntimeException("Meeting not found with id: " + meetingId));
+        List<Decision> decisions = decisionService.getDecisionsByMeeting(meeting);
+        System.out.println("Found " + decisions.size() + " decisions for meeting " + meetingId);
+        return ResponseEntity.ok(decisions);
     }
 
     @Operation(summary = "Get decisions by responsible user")

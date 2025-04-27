@@ -9,6 +9,7 @@ import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
 import { TasksService } from '../../core/services/tasks.service';
 import { ReportService } from '../../core/services/report.service';
+import { Task } from '../../core/models/task.model';
 
 @Component({
     selector: 'app-task-progress',
@@ -41,39 +42,39 @@ import { ReportService } from '../../core/services/report.service';
             <div class="col-span-12 md:col-span-3">
                 <p-card>
                     <ng-template pTemplate="header">
-                        <div class="text-center p-4 bg-info-50">
+                        <div class="text-center p-4 bg-blue-50">
                             <i class="pi pi-sync text-4xl text-info-500"></i>
                         </div>
                     </ng-template>
                     <div class="text-center">
                         <h3 class="text-xl font-bold mb-2">In Progress</h3>
-                        <p class="text-3xl font-bold text-info-500">{{ inProgressTasks }}</p>
+                        <p class="text-3xl font-bold text-blue-500">{{ inProgressTasks }}</p>
                     </div>
                 </p-card>
             </div>
             <div class="col-span-12 md:col-span-3">
                 <p-card>
                     <ng-template pTemplate="header">
-                        <div class="text-center p-4 bg-success-50">
+                        <div class="text-center p-4 bg-green-50">
                             <i class="pi pi-check-circle text-4xl text-success-500"></i>
                         </div>
                     </ng-template>
                     <div class="text-center">
                         <h3 class="text-xl font-bold mb-2">Completed</h3>
-                        <p class="text-3xl font-bold text-success-500">{{ completedTasks }}</p>
+                        <p class="text-3xl font-bold text-green-500">{{ completedTasks }}</p>
                     </div>
                 </p-card>
             </div>
             <div class="col-span-12 md:col-span-3">
                 <p-card>
                     <ng-template pTemplate="header">
-                        <div class="text-center p-4 bg-warning-50">
+                        <div class="text-center p-4 bg-yellow-50">
                             <i class="pi pi-calendar text-4xl text-warning-500"></i>
                         </div>
                     </ng-template>
                     <div class="text-center">
                         <h3 class="text-xl font-bold mb-2">Overdue</h3>
-                        <p class="text-3xl font-bold text-warning-500">{{ overdueTasks }}</p>
+                        <p class="text-3xl font-bold text-yellow-500">{{ overdueTasks }}</p>
                     </div>
                 </p-card>
             </div>
@@ -111,6 +112,7 @@ export class TaskProgressComponent implements OnInit {
     inProgressTasks = 0;
     completedTasks = 0;
     overdueTasks = 0;
+    allTasks: Task[] = [];
 
     statusChartData: any;
     trendChartData: any;
@@ -132,16 +134,14 @@ export class TaskProgressComponent implements OnInit {
 
     ngOnInit() {
         this.loadTaskStatistics();
-        this.initCharts();
     }
 
     loadTaskStatistics() {
         this.tasksService.list().subscribe({
             next: (tasks) => {
-                this.pendingTasks = tasks.filter(t => t.status === 'PENDING').length;
-                this.inProgressTasks = tasks.filter(t => t.status === 'IN_PROGRESS').length;
-                this.completedTasks = tasks.filter(t => t.status === 'COMPLETED').length;
-                this.overdueTasks = tasks.filter(t => this.isOverdue(t)).length;
+                this.allTasks = tasks;
+                this.updateTaskCounts();
+                this.initCharts();
             },
             error: (error) => {
                 this.messageService.add({
@@ -151,6 +151,13 @@ export class TaskProgressComponent implements OnInit {
                 });
             }
         });
+    }
+
+    updateTaskCounts() {
+        this.pendingTasks = this.allTasks.filter(t => t.status === 'PENDING').length;
+        this.inProgressTasks = this.allTasks.filter(t => t.status === 'IN_PROGRESS').length;
+        this.completedTasks = this.allTasks.filter(t => t.status === 'COMPLETED').length;
+        this.overdueTasks = this.allTasks.filter(t => this.isOverdue(t)).length;
     }
 
     initCharts() {
@@ -165,19 +172,20 @@ export class TaskProgressComponent implements OnInit {
             ]
         };
 
-        // Completion Trend Chart
+        // Completion Trend Chart - Group tasks by month
+        const monthlyData = this.calculateMonthlyTaskData();
         this.trendChartData = {
-            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+            labels: monthlyData.labels,
             datasets: [
                 {
                     label: 'Completed Tasks',
-                    data: [12, 15, 18, 14, 20, 25],
+                    data: monthlyData.completed,
                     borderColor: '#66BB6A',
                     tension: 0.4
                 },
                 {
                     label: 'New Tasks',
-                    data: [15, 18, 20, 16, 22, 28],
+                    data: monthlyData.created,
                     borderColor: '#29B6F6',
                     tension: 0.4
                 }
@@ -185,7 +193,47 @@ export class TaskProgressComponent implements OnInit {
         };
     }
 
-    isOverdue(task: any): boolean {
+    calculateMonthlyTaskData() {
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        const currentDate = new Date();
+        const sixMonthsAgo = new Date();
+        sixMonthsAgo.setMonth(currentDate.getMonth() - 5);
+
+        const monthlyCompleted = new Array(6).fill(0);
+        const monthlyCreated = new Array(6).fill(0);
+        const labels = [];
+
+        // Generate labels for the last 6 months
+        for (let i = 0; i < 6; i++) {
+            const date = new Date();
+            date.setMonth(currentDate.getMonth() - (5 - i));
+            labels.push(months[date.getMonth()]);
+        }
+
+        // Count tasks for each month
+        this.allTasks.forEach(task => {
+            // Use updated_at if created_at is null, otherwise use current date
+            const taskDate = task.updatedAt ? new Date(task.updatedAt) : new Date();
+            
+            if (taskDate >= sixMonthsAgo) {
+                const monthIndex = 5 - Math.floor((currentDate.getTime() - taskDate.getTime()) / (30 * 24 * 60 * 60 * 1000));
+                if (monthIndex >= 0 && monthIndex < 6) {
+                    monthlyCreated[monthIndex]++;
+                    if (task.status === 'COMPLETED') {
+                        monthlyCompleted[monthIndex]++;
+                    }
+                }
+            }
+        });
+
+        return {
+            labels,
+            completed: monthlyCompleted,
+            created: monthlyCreated
+        };
+    }
+
+    isOverdue(task: Task): boolean {
         if (task.status === 'COMPLETED') return false;
         const deadline = new Date(task.deadline);
         return deadline < new Date();
