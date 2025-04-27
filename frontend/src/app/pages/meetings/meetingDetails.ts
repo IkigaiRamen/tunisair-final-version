@@ -251,7 +251,7 @@ import { AuthService } from '../../core/services/auth.service';
                 </div>
                 <div>
                     <label for="responsibleUser" class="block font-bold mb-2">Responsible User</label>
-                    <p-dropdown [options]="userList" [(ngModel)]="decision.responsibleUser" optionLabel="fullName" placeholder="Select Participant" [style]="{ width: '100%' }" [scrollHeight]="'200px'" appendTo="body"> </p-dropdown>
+                    <p-dropdown [options]="userList" [(ngModel)]="decision.responsibleUser" optionLabel="fullName" placeholder="Select Responsible User" [style]="{ width: '100%' }" [scrollHeight]="'200px'" appendTo="body"> </p-dropdown>
                 </div>
                 <div>
                     <label for="deadline" class="block font-bold mb-2">Deadline</label>
@@ -285,14 +285,14 @@ import { AuthService } from '../../core/services/auth.service';
                 </div>
                 <div>
                     <label for="deadline" class="block font-bold mb-2">Deadline</label>
-                    <p-calendar [(ngModel)]="task.deadline" [showTime]="true" dateFormat="yy-mm-dd" />
+                    <p-calendar fluid [(ngModel)]="task.deadline" [showTime]="true" dateFormat="yy-mm-dd" />
                 </div>
             </div>
             <ng-template pTemplate="footer">
                 <p-button label="Cancel" icon="pi pi-times" (onClick)="hideTaskDialog()" />
                 <p-button label="Save" icon="pi pi-check" (onClick)="saveTask()" />
             </ng-template>
-        </p-dialog>
+        </p-dialog> 
 
         <!-- Meeting Edit Dialog -->
         <p-dialog [(visible)]="meetingDialog" [style]="{ width: '600px' }" header="Edit Meeting" [modal]="true" 
@@ -326,7 +326,18 @@ import { AuthService } from '../../core/services/auth.service';
                                      [style]="{'width': '100%'}"
                                      [virtualScroll]="true"
                                      [virtualScrollItemSize]="34"
-                                     appendTo="body" />
+                                     appendTo="body">
+                            <ng-template let-user pTemplate="item">
+                                <div class="flex align-items-center">
+                                    <div>{{user.fullName}}</div>
+                                </div>
+                            </ng-template>
+                            <ng-template let-user pTemplate="selectedItem">
+                                <div class="flex align-items-center">
+                                    <div>{{user.fullName}}</div>
+                                </div>
+                            </ng-template>
+                        </p-multiSelect>
                     </div>
                     <div class="field">
                         <label for="dateTime" class="block font-bold mb-2">Date & Time</label>
@@ -542,11 +553,11 @@ export class MeetingDetailsComponent implements OnInit {
             this.documentsService.list(this.meeting.id).subscribe({
                 next: (documents) => {
                     this.documents = documents;
-                },
-                error: (error) => {
-                    this.messageService.add({
-                        severity: 'error',
-                        summary: 'Error',
+            },
+            error: (error) => {
+                this.messageService.add({
+                    severity: 'error',
+                    summary: 'Error',
                         detail: 'Failed to refresh documents'
                     });
                 }
@@ -632,6 +643,10 @@ export class MeetingDetailsComponent implements OnInit {
 
     editDecision(decision: Decision) {
         this.decision = { ...decision };
+        // Ensure deadline is properly formatted
+        if (this.decision.deadline) {
+            this.decision.deadline = new Date(this.decision.deadline) as any;
+        }
         this.decisionDialog = true;
     }
 
@@ -684,9 +699,14 @@ export class MeetingDetailsComponent implements OnInit {
     }
 
     deleteDecision(decision: Decision) {
+        this.confirmationService.confirm({
+            message: `Are you sure you want to delete this decision?`,
+            header: 'Confirm Delete',
+            icon: 'pi pi-exclamation-triangle',
+            accept: () => {
         this.decisionsService.delete(decision.id).subscribe({
             next: () => {
-                this.decisions = this.decisions.filter((d) => d.id !== decision.id);
+                        this.decisions = this.decisions.filter((d) => d.id !== decision.id);
                 this.messageService.add({
                     severity: 'success',
                     summary: 'Success',
@@ -698,6 +718,8 @@ export class MeetingDetailsComponent implements OnInit {
                     severity: 'error',
                     summary: 'Error',
                     detail: 'Failed to delete decision'
+                        });
+                    }
                 });
             }
         });
@@ -718,6 +740,10 @@ export class MeetingDetailsComponent implements OnInit {
 
     editTask(task: Task) {
         this.task = { ...task };
+        // Ensure deadline is properly formatted
+        if (this.task.deadline) {
+            this.task.deadline = new Date(this.task.deadline) as any;
+        }
         this.taskDialog = true;
     }
 
@@ -770,9 +796,14 @@ export class MeetingDetailsComponent implements OnInit {
     }
 
     deleteTask(task: Task) {
+        this.confirmationService.confirm({
+            message: `Are you sure you want to delete this task?`,
+            header: 'Confirm Delete',
+            icon: 'pi pi-exclamation-triangle',
+            accept: () => {
         this.tasksService.delete(task.id).subscribe({
             next: () => {
-                this.tasks = this.tasks.filter((t) => t.id !== task.id);
+                        this.tasks = this.tasks.filter((t) => t.id !== task.id);
                 this.messageService.add({
                     severity: 'success',
                     summary: 'Success',
@@ -784,6 +815,8 @@ export class MeetingDetailsComponent implements OnInit {
                     severity: 'error',
                     summary: 'Error',
                     detail: 'Failed to delete task'
+                        });
+                    }
                 });
             }
         });
@@ -806,7 +839,29 @@ export class MeetingDetailsComponent implements OnInit {
     editMeeting() {
         if (this.meeting) {
             this.editingMeeting = { ...this.meeting };
+            // Ensure dateTime is properly formatted
+            if (this.editingMeeting.dateTime) {
+                this.editingMeeting.dateTime = new Date(this.editingMeeting.dateTime) as any;
+            }
+            // Ensure participants are properly initialized with full user objects
+            if (this.editingMeeting.participants) {
+                this.editingMeeting.participants = this.editingMeeting.participants.map(participant => {
+                    // If participant is already a full user object, use it
+                    if (participant.id && participant.fullName) {
+                        return participant;
+                    }
+                    // Otherwise, find the full user object from userList
+                    const fullUser = this.userList.find(u => u.id === participant.id);
+                    if (fullUser) {
+                        return fullUser;
+                    }
+                    return participant;
+                });
+            } else {
+                this.editingMeeting.participants = [];
+            }
             this.meetingDialog = true;
+            this.submitted = false;
         }
     }
 
@@ -824,6 +879,29 @@ export class MeetingDetailsComponent implements OnInit {
                 header: 'Confirm Update',
                 icon: 'pi pi-exclamation-triangle',
                 accept: () => {
+                    // Ensure dateTime is in ISO format before saving
+                    if (this.editingMeeting.dateTime && typeof this.editingMeeting.dateTime === 'object') {
+                        this.editingMeeting.dateTime = (this.editingMeeting.dateTime as Date).toISOString();
+                    }
+                    
+                    // Format participants data
+                    if (this.editingMeeting.participants) {
+                        this.editingMeeting.participants = this.editingMeeting.participants.map(participant => {
+                            // If participant is already a full user object, use it
+                            if (participant.id && participant.fullName) {
+                                return participant;
+                            }
+                            // Otherwise, find the full user object from userList
+                            const fullUser = this.userList.find(u => u.id === participant.id);
+                            if (fullUser) {
+                                return fullUser;
+                            }
+                            return participant;
+                        });
+                    }
+                    
+                    console.log('Saving meeting with participants:', this.editingMeeting.participants);
+                    
                     this.meetingsService.update(this.editingMeeting.id, this.editingMeeting).subscribe({
                         next: (updatedMeeting) => {
                             this.meeting = updatedMeeting;

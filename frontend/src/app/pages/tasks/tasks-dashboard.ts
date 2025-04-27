@@ -160,7 +160,7 @@ import { DropdownModule } from 'primeng/dropdown';
                                  optionLabel="fullName" placeholder="Select user"
                                  styleClass="w-full" />
                 </div>
-
+ 
                 <div class="field">
                     <label for="deadline" class="block font-bold mb-2">Deadline</label>
                     <p-calendar [(ngModel)]="task.deadline" [showTime]="true" dateFormat="yy-mm-dd" 

@@ -106,7 +106,7 @@ export class pastMeetings implements OnInit {
     loadPastMeetings(): void {
         this.loading = true;
         // Get the current date as the start point for past meetings
-        const start = new Date().toISOString();
+        const start = new Date().toISOString();    
         
         this.meetingsService.getPastMeetings(start).subscribe({
             next: (meetings: Meeting[]) => {

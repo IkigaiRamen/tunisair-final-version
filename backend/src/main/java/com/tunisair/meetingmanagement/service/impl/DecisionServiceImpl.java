@@ -92,8 +92,7 @@ public class DecisionServiceImpl implements DecisionService {
                     decision.getResponsibleUser(),
                     "Decision Deleted",
                     String.format("The decision \"%s\" assigned to you has been deleted.", decision.getContent()),
-                    LocalDateTime.now()
-            );
+                    LocalDateTime.now());
         }
 
         decisionRepository.delete(decision);
@@ -139,8 +138,7 @@ public class DecisionServiceImpl implements DecisionService {
                 user,
                 "New Decision Responsibility",
                 String.format("You have been assigned to a new decision: \"%s\".", updatedDecision.getContent()),
-                updatedDecision.getDeadline()
-        );
+                updatedDecision.getDeadline());
 
         return updatedDecision;
     }
@@ -160,9 +158,9 @@ public class DecisionServiceImpl implements DecisionService {
             notificationService.sendTaskAssignment(
                     updatedDecision.getResponsibleUser(),
                     "Decision Deadline Updated",
-                    String.format("The deadline for your decision \"%s\" has been updated to %s.", updatedDecision.getContent(), newDeadline),
-                    newDeadline
-            );
+                    String.format("The deadline for your decision \"%s\" has been updated to %s.",
+                            updatedDecision.getContent(), newDeadline),
+                    newDeadline);
         }
 
         return updatedDecision;

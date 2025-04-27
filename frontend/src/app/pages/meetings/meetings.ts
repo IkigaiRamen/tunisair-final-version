@@ -177,7 +177,18 @@ interface ExportColumn {
                                      [style]="{'width': '100%'}"
                                      [virtualScroll]="true"
                                      [virtualScrollItemSize]="34"
-                                     appendTo="body" />
+                                     appendTo="body">
+                            <ng-template let-user pTemplate="item">
+                                <div class="flex align-items-center">
+                                    <div>{{user.fullName}}</div>
+                                </div>
+                            </ng-template>
+                            <ng-template let-user pTemplate="selectedItem">
+                                <div class="flex align-items-center">
+                                    <div>{{user.fullName}}</div>
+                                </div>
+                            </ng-template>
+                        </p-multiSelect>
                     </div>
                     <div class="field">
                         <label for="dateTime" class="block font-bold mb-2">Date & Time</label>
@@ -292,7 +303,29 @@ export class meetings implements OnInit {
 
     editMeeting(meeting: Meeting) {
         this.meeting = { ...meeting };
+        // Ensure dateTime is properly formatted
+        if (this.meeting.dateTime) {
+            this.meeting.dateTime = new Date(this.meeting.dateTime) as any;
+        }
+        // Ensure participants are properly initialized with full user objects
+        if (this.meeting.participants) {
+            this.meeting.participants = this.meeting.participants.map(participant => {
+                // If participant is already a full user object, use it
+                if (participant.id && participant.fullName) {
+                    return participant;
+                }
+                // Otherwise, find the full user object from userList
+                const fullUser = this.userList.find(u => u.id === participant.id);
+                if (fullUser) {
+                    return fullUser;
+                }
+                return participant;
+            });
+        } else {
+            this.meeting.participants = [];
+        }
         this.meetingDialog = true;
+        this.submitted = false;
     }
 
     deleteSelectedMeetings() {
@@ -380,48 +413,59 @@ export class meetings implements OnInit {
         this.submitted = true;
 
         if (this.meeting.title?.trim()) {
+            // Show loading message immediately
+            this.messageService.add({
+                severity: 'info',
+                summary: 'Saving',
+                detail: 'Saving meeting changes...',
+                life: 2000
+            });
+
             this.authService.me().subscribe({
                 next: (user) => {
                     this.meeting.createdBy = user;
 
                     if (this.meeting.id) {
-                        this.confirmationService.confirm({
-                            message: 'Are you sure you want to save the changes to this meeting?',
-                            header: 'Confirm Update',
-                            icon: 'pi pi-exclamation-triangle',
-                            accept: () => {
-                                this.meetingService.update(this.meeting.id, this.meeting).subscribe({
-                                    next: (updatedMeeting) => {
-                                        const _meetings = this.meetings();
-                                        const index = _meetings.findIndex((m) => m.id === updatedMeeting.id);
-                                        if (index !== -1) {
-                                            _meetings[index] = updatedMeeting;
-                                            this.meetings.set([..._meetings]);
-                                        }
+                        // Ensure dateTime is in ISO format before saving
+                        if (this.meeting.dateTime && typeof this.meeting.dateTime === 'object') {
+                            this.meeting.dateTime = (this.meeting.dateTime as Date).toISOString();
+                        }
 
-                                        this.messageService.add({
-                                            severity: 'success',
-                                            summary: 'Success',
-                                            detail: 'Meeting updated successfully',
-                                            life: 3000
-                                        });
-                                        this.meetingDialog = false;
-                                    },
-                                    error: (error) => {
-                                        console.error('Error updating meeting:', error);
-                                        this.messageService.add({
-                                            severity: 'error',
-                                            summary: 'Error',
-                                            detail: error.error?.message || 'Failed to update meeting. You may not have the required permissions.',
-                                            life: 3000
-                                        });
-                                    }
+                        // Close dialog immediately to improve UX
+                        this.meetingDialog = false;
+
+                        this.meetingService.update(this.meeting.id, this.meeting).subscribe({
+                            next: (updatedMeeting) => {
+                                const _meetings = this.meetings();
+                                const index = _meetings.findIndex((m) => m.id === updatedMeeting.id);
+                                if (index !== -1) {
+                                    _meetings[index] = updatedMeeting;
+                                    this.meetings.set([..._meetings]);
+                                }
+
+                                this.messageService.add({
+                                    severity: 'success',
+                                    summary: 'Success',
+                                    detail: 'Meeting updated successfully',
+                                    life: 1000
+                                });
+                            },
+                            error: (error) => {
+                                console.error('Error updating meeting:', error);
+                                this.messageService.add({
+                                    severity: 'error',
+                                    summary: 'Error',
+                                    detail: error.error?.message || 'Failed to update meeting. You may not have the required permissions.',
+                                    life: 3000
                                 });
                             }
                         });
                     } else {
                         this.meeting.createdAt = new Date().toISOString();
                         this.meeting.updatedAt = new Date().toISOString();
+
+                        // Close dialog immediately to improve UX
+                        this.meetingDialog = false;
 
                         this.meetingService.create(this.meeting).subscribe({
                             next: (createdMeeting) => {
@@ -434,7 +478,6 @@ export class meetings implements OnInit {
                                     detail: 'Meeting created successfully',
                                     life: 3000
                                 });
-                                this.meetingDialog = false;
                             },
                             error: (error) => {
                                 console.error('Error creating meeting:', error);
