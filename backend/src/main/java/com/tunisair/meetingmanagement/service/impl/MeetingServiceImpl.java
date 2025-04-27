@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -40,7 +41,8 @@ public class MeetingServiceImpl implements MeetingService {
 
         // Notify all participants
         for (User participant : createdMeeting.getParticipants()) {
-            notificationService.sendMeetingInvitation(participant, createdMeeting.getTitle(), createdMeeting.getDateTime());
+            notificationService.sendMeetingInvitation(participant, createdMeeting.getTitle(),
+                    createdMeeting.getDateTime());
         }
 
         return createdMeeting;
@@ -56,6 +58,17 @@ public class MeetingServiceImpl implements MeetingService {
         meeting.setAgenda(meetingDetails.getAgenda());
         meeting.setObjectives(meetingDetails.getObjectives());
         meeting.setDateTime(meetingDetails.getDateTime());
+
+        // Update participants
+        Set<User> updatedParticipants = new HashSet<>();
+        if (meetingDetails.getParticipants() != null) {
+            for (User participant : meetingDetails.getParticipants()) {
+                User existingUser = userRepository.findById(participant.getId())
+                        .orElseThrow(() -> new RuntimeException("User not found with id: " + participant.getId()));
+                updatedParticipants.add(existingUser);
+            }
+        }
+        meeting.setParticipants(updatedParticipants);
 
         Meeting updatedMeeting = meetingRepository.save(meeting);
 
@@ -151,7 +164,8 @@ public class MeetingServiceImpl implements MeetingService {
         Meeting updated = meetingRepository.save(meeting);
 
         String subject = "Removed from Meeting: " + updated.getTitle();
-        String description = String.format("You have been removed from the meeting scheduled on %s.", updated.getDateTime());
+        String description = String.format("You have been removed from the meeting scheduled on %s.",
+                updated.getDateTime());
         notificationService.sendTaskAssignment(user, subject, description, LocalDateTime.now());
 
         return updated;

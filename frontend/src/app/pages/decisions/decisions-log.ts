@@ -186,11 +186,17 @@ export class DecisionsLogComponent implements OnInit {
     }
 
     loadDecisions() {
+        console.log('Loading decisions...');
         this.decisionsService.list().subscribe({
             next: (decisions) => {
+                console.log('Received decisions:', decisions);
+                decisions.forEach(decision => {
+                    console.log(`Decision ID: ${decision.id}, Content: ${decision.content}, Tasks:`, decision.tasks);
+                });
                 this.decisions = decisions;
             },
             error: (error) => {
+                console.error('Error loading decisions:', error);
                 this.messageService.add({
                     severity: 'error',
                     summary: 'Error',
