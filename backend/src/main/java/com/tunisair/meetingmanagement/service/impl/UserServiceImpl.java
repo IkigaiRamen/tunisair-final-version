@@ -50,11 +50,18 @@ public class UserServiceImpl implements UserService {
 
         user.setFullName(userDetails.getFullName());
         user.setEmail(userDetails.getEmail());
+
+        // Only update password if a new one is provided and it's different from the
+        // current one
         if (userDetails.getPassword() != null && !userDetails.getPassword().isEmpty()) {
-            user.setPassword(passwordEncoder.encode(userDetails.getPassword()));
+            // Don't encode if the password is already encoded (contains $2a$)
+            if (!userDetails.getPassword().startsWith("$2a$")) {
+                user.setPassword(passwordEncoder.encode(userDetails.getPassword()));
+            }
         }
-        user.setEnabled(userDetails.isEnabled());
-        user.setRoles(userDetails.getRoles());
+
+        // Preserve the existing roles and enabled status
+        user.setEnabled(user.isEnabled()); // Keep the current enabled status
 
         return userRepository.save(user);
     }
@@ -76,4 +83,4 @@ public class UserServiceImpl implements UserService {
     public boolean existsByEmail(String email) {
         return userRepository.existsByEmail(email);
     }
-} 
+}

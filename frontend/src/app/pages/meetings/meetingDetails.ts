@@ -443,16 +443,18 @@ export class MeetingDetailsComponent implements OnInit {
     }
 
     loadDecisions(meetingId: number) {
+        console.log('Loading decisions for meeting:', meetingId);
         this.decisionsService.list(meetingId).subscribe({
             next: (decisions) => {
+                console.log('Decisions received:', decisions);
                 this.decisions = decisions;
-                console.log('Decisions loaded:', this.decisions);
             },
             error: (error) => {
+                console.error('Error loading decisions:', error);
                 this.messageService.add({
                     severity: 'error',
                     summary: 'Error',
-                    detail: 'Failed to load decisions'
+                    detail: 'Failed to load decisions: ' + (error.error?.message || 'Unknown error')
                 });
             }
         });

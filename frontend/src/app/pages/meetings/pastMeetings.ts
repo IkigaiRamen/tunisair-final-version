@@ -8,6 +8,8 @@ import { Meeting } from '../../core/models/meeting.model';
 import { RouterModule } from '@angular/router';
 import { MessageService } from 'primeng/api';
 import { ToastModule } from 'primeng/toast';
+import { AuthService } from '../../core/services/auth.service';
+import { User } from '../../core/models/user.model';
 
 @Component({
     selector: 'app-past-meetings',
@@ -88,30 +90,38 @@ import { ToastModule } from 'primeng/toast';
             }
         }
     `],
-    providers: [MeetingsService, MessageService]
+    providers: [MeetingsService, MessageService, AuthService]
 })
 export class pastMeetings implements OnInit {
     meetings: Meeting[] = [];
     loading: boolean = true;
+    currentUser: User | null = null;
 
     constructor(
         private meetingsService: MeetingsService,
-        private messageService: MessageService
+        private messageService: MessageService,
+        private authService: AuthService
     ) {}
 
     ngOnInit(): void {
-        this.loadPastMeetings();
+        this.currentUser = this.authService.getUser();
+        if (this.currentUser) {
+            this.loadPastMeetings();
+        }
     }
 
     loadPastMeetings(): void {
         this.loading = true;
-        // Get the current date as the start point for past meetings
         const start = new Date().toISOString();    
         
         this.meetingsService.getPastMeetings(start).subscribe({
             next: (meetings: Meeting[]) => {
+                // Filter meetings where the current user is a participant
+                const userMeetings = meetings.filter(meeting => 
+                    meeting.participants.some(participant => participant.id === this.currentUser?.id)
+                );
                 // Sort meetings by date in descending order (most recent first)
-                this.meetings = meetings.sort((a, b) => 
+                this.meetings = userMeetings.sort((a, b) => 
                     new Date(b.dateTime).getTime() - new Date(a.dateTime).getTime()
                 );
                 this.loading = false;

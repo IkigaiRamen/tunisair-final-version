@@ -70,7 +70,7 @@ public class SecurityConfig {
                 // Allow all requests without authentication (temporary for development)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(PUBLIC_ENDPOINTS).permitAll()
-                        .anyRequest().permitAll()  // This line allows all requests without authentication
+                        .anyRequest().permitAll() // This line allows all requests without authentication
                 )
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

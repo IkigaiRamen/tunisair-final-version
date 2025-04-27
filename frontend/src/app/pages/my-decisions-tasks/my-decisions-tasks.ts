@@ -9,6 +9,7 @@ import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
 import { ToastModule } from 'primeng/toast';
 import { CalendarModule } from 'primeng/calendar';
+import { DropdownModule } from 'primeng/dropdown';
 import { MessageService } from 'primeng/api';
 import { Decision } from '../../core/models/decision.model';
 import { Task } from '../../core/models/task.model';
@@ -31,7 +32,8 @@ import { RouterModule } from '@angular/router';
         InputIconModule,
         ToastModule,
         CalendarModule,
-        RouterModule
+        RouterModule,
+        DropdownModule
     ],
     template: `
         <div class="grid grid-cols-1 gap-8">
@@ -154,6 +156,7 @@ import { RouterModule } from '@angular/router';
                                 <th pSortableColumn="decision.content">Decision <p-sortIcon field="decision.content" /></th>
                                 <th pSortableColumn="status">Status <p-sortIcon field="status" /></th>
                                 <th pSortableColumn="deadline">Deadline <p-sortIcon field="deadline" /></th>
+                                <th>Actions</th>
                             </tr>
                         </ng-template>
                         <ng-template #body let-task>
@@ -165,6 +168,18 @@ import { RouterModule } from '@angular/router';
                                            [severity]="getTaskStatusSeverity(task.status)" />
                                 </td>
                                 <td>{{ task.deadline | date:'medium' }}</td>
+                                <td>
+                                    <p-dropdown [options]="getStatusOptions(task)" 
+                                               [(ngModel)]="task.status"
+                                               (onChange)="updateTaskStatus(task)"
+                                               [style]="{'min-width': '120px'}"
+                                               appendTo="body"
+                                               [autoDisplayFirst]="false"
+                                               [scrollHeight]="'200px'"
+                                               [disabled]="task.status === 'COMPLETED'"
+                                               placeholder="Change Status">
+                                    </p-dropdown>
+                                </td>
                             </tr>
                         </ng-template>
                     </p-table>
@@ -184,6 +199,11 @@ export class MyDecisionsTasksComponent implements OnInit {
     taskStartDate: Date | null = null;
     taskEndDate: Date | null = null;
     searchText: string = '';
+    statusOptions = [
+        { label: 'Pending', value: 'PENDING' },
+        { label: 'In Progress', value: 'IN_PROGRESS' },
+        { label: 'Completed', value: 'COMPLETED' }
+    ];
 
     constructor(
         private decisionsService: DecisionsService,
@@ -317,5 +337,36 @@ export class MyDecisionsTasksComponent implements OnInit {
             default:
                 return 'info';
         }
+    }
+
+    updateTaskStatus(task: Task) {
+        this.tasksService.updateStatus(task.id, task.status).subscribe({
+            next: () => {
+                this.messageService.add({
+                    severity: 'success',
+                    summary: 'Success',
+                    detail: 'Task status updated successfully'
+                });
+            },
+            error: (error) => {
+                this.messageService.add({
+                    severity: 'error',
+                    summary: 'Error',
+                    detail: 'Failed to update task status'
+                });
+                // Revert the status change in case of error
+                this.loadUserData();
+            }
+        });
+    }
+
+    getStatusOptions(task: Task) {
+        if (task.status === 'IN_PROGRESS') {
+            return [
+                { label: 'In Progress', value: 'IN_PROGRESS' },
+                { label: 'Completed', value: 'COMPLETED' }
+            ];
+        }
+        return this.statusOptions;
     }
 } 

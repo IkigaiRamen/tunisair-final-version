@@ -13,18 +13,18 @@ import java.util.List;
 @Repository
 public interface DecisionRepository extends JpaRepository<Decision, Long> {
 
-    @EntityGraph(value = "Decision.withTasks")
+    @EntityGraph(attributePaths = { "tasks", "meeting", "responsibleUser" })
     List<Decision> findByMeeting(Meeting meeting);
 
-    @EntityGraph(value = "Decision.withTasks")
+    @EntityGraph(attributePaths = { "tasks", "meeting", "responsibleUser" })
     List<Decision> findByResponsibleUser(User user);
 
-    @EntityGraph(value = "Decision.withTasks")
+    @EntityGraph(attributePaths = { "tasks", "meeting", "responsibleUser" })
     List<Decision> findByDeadlineBetween(LocalDateTime start, LocalDateTime end);
 
-    @EntityGraph(value = "Decision.withTasks")
+    @EntityGraph(attributePaths = { "tasks", "meeting", "responsibleUser" })
     List<Decision> findByDeadlineAfter(LocalDateTime dateTime);
 
-    @EntityGraph(value = "Decision.withTasks")
+    @EntityGraph(attributePaths = { "tasks", "meeting", "responsibleUser" })
     List<Decision> findByCreatedAtBetween(LocalDateTime start, LocalDateTime end);
-} 
+}

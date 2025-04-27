@@ -6,6 +6,7 @@ import com.tunisair.meetingmanagement.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
@@ -35,7 +36,6 @@ public class UserController {
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
-
     @GetMapping("/email/{email}")
     @PreAuthorize("hasRole('ADMIN') or #email == authentication.principal.email")
     public ResponseEntity<User> getUserByEmail(@PathVariable String email) {
@@ -51,8 +51,20 @@ public class UserController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN') or #id == authentication.principal.id")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<User> updateUser(@PathVariable Long id, @Valid @RequestBody User userDetails) {
+        // Get the current user's email from the authentication context
+        String currentUserEmail = SecurityContextHolder.getContext().getAuthentication().getName();
+
+        // Get the user being updated
+        User userToUpdate = userService.getUserById(id)
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + id));
+
+        // Check if the current user is trying to update their own profile
+        if (!userToUpdate.getEmail().equals(currentUserEmail)) {
+            throw new RuntimeException("You can only update your own profile");
+        }
+
         return ResponseEntity.ok(userService.updateUser(id, userDetails));
     }
 
@@ -68,4 +80,4 @@ public class UserController {
     public ResponseEntity<Set<User>> getUsersByRole(@PathVariable Role.RoleName roleName) {
         return ResponseEntity.ok(userService.getUsersByRole(roleName));
     }
-} 
+}
