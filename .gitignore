@@ -1,1 +1,18 @@
 /frontend/node_modules
+/backend/target/
+/backend/build/
+/backend/generated/
+/backend/out/
+
+/backend/*.log
+/backend/*.tmp
+/backend/*.bak
+/backend/*.swp
+
+# IDE folders inside backend
+/backend/.idea/
+/backend/*.iml
+/backend/.classpath
+/backend/.project
+/backend/.settings/
+/backend/.vscode/
