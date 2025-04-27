@@ -48,7 +48,8 @@ export class AppMenu {
                 label: 'Documents',
                 items: [
                     { label: 'All Documents', icon: 'pi pi-fw pi-folder', routerLink: ['/documents'] },
-                    { label: 'By Meeting', icon: 'pi pi-fw pi-link', routerLink: ['/documents/by-meeting'] }
+                    { label: 'By Meeting', icon: 'pi pi-fw pi-link', routerLink: ['/documents/by-meeting'] },
+                    { label: 'Upload Document', icon: 'pi pi-fw pi-upload', routerLink: ['/documents/upload'] } // Moved to common menu
                 ]
             },
             {
@@ -83,7 +84,7 @@ export class AppMenu {
             {
                 label: 'Documents',
                 items: [
-                    { label: 'Upload Document', icon: 'pi pi-fw pi-upload', routerLink: ['/documents/upload'] }
+                    // Removed the "Upload Document" option from here
                 ]
             }
         ];
