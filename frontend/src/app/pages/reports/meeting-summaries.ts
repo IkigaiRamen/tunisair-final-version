@@ -198,12 +198,12 @@ export class MeetingSummariesComponent implements OnInit {
     }
 
     exportPDF() {
-        this.reportService.generate('pdf').subscribe({
+        this.reportService.generateAllMeetingsReportPDF().subscribe({
             next: (blob) => {
                 const url = window.URL.createObjectURL(blob);
                 const link = document.createElement('a');
                 link.href = url;
-                link.download = 'meeting-summaries.pdf';
+                link.download = 'all_meetings_report.pdf';
                 link.click();
                 window.URL.revokeObjectURL(url);
             },
@@ -216,14 +216,14 @@ export class MeetingSummariesComponent implements OnInit {
             }
         });
     }
-
+    
     exportExcel() {
-        this.reportService.generate('excel').subscribe({
+        this.reportService.generateAllMeetingsReportExcel().subscribe({
             next: (blob) => {
                 const url = window.URL.createObjectURL(blob);
                 const link = document.createElement('a');
                 link.href = url;
-                link.download = 'meeting-summaries.xlsx';
+                link.download = 'all_meetings_report.xlsx';
                 link.click();
                 window.URL.revokeObjectURL(url);
             },
@@ -236,6 +236,7 @@ export class MeetingSummariesComponent implements OnInit {
             }
         });
     }
+    
 
     getTaskStatusSeverity(status: string): 'success' | 'info' | 'warn' | 'danger' {
         switch (status) {

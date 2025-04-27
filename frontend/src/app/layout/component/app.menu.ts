@@ -58,9 +58,16 @@ export class AppMenu {
                     { label: 'Tasks Dashboard', icon: 'pi pi-fw pi-check-square', routerLink: ['/decisions-tasks/tasks'] },
                     { label: 'My Decisions & Tasks', icon: 'pi pi-fw pi-check-square', routerLink: ['/decisions-tasks/my-decisions-tasks'] }
                 ]
+            },
+            {
+                label: 'Reports',
+                items: [
+                    { label: 'Meeting Summaries', icon: 'pi pi-fw pi-book', routerLink: ['/reports/meeting-summaries'] },
+                    { label: 'Download Reports', icon: 'pi pi-fw pi-download', routerLink: ['/reports/download'] }
+                ]
             }
         ];
-
+    
         const adminMenuItems: MenuItem[] = [
             {
                 label: 'User Management',
@@ -71,14 +78,8 @@ export class AppMenu {
                 items: [{ label: 'System Settings', icon: 'pi pi-fw pi-cog', routerLink: ['/settings'] }]
             }
         ];
-
+    
         const secretaryMenuItems: MenuItem[] = [
-            {
-                label: 'Meetings',
-                items: [
-                    { label: 'Plan New Meeting', icon: 'pi pi-fw pi-plus', routerLink: ['/', 'meetings', 'new'] }
-                ]
-            },
             {
                 label: 'Documents',
                 items: [
@@ -86,32 +87,34 @@ export class AppMenu {
                 ]
             }
         ];
-
-        const boardMemberMenuItems: MenuItem[] = [
-            {
-                label: 'Reports',
-                items: [
-                    { label: 'Meeting Summaries', icon: 'pi pi-fw pi-book', routerLink: ['/reports/meeting-summaries'] },
-                    { label: 'Download Reports', icon: 'pi pi-fw pi-download', routerLink: ['/reports/download'] }
-                ]
-            }
-        ];
-
+    
         // Add role-specific menu items
         switch (this.userRole) {
             case 'ROLE_ADMIN':
-                this.model = [...commonMenuItems, ...adminMenuItems, ...secretaryMenuItems, ...boardMemberMenuItems];
+                // Admin can see "Plan New Meeting" inside the "Meetings" section
+                commonMenuItems[0].items?.push({
+                    label: 'Plan New Meeting',
+                    icon: 'pi pi-fw pi-plus',
+                    routerLink: ['/meetings/new']
+                });
+                this.model = [...commonMenuItems, ...adminMenuItems, ...secretaryMenuItems];
                 break;
             case 'ROLE_SECRETARY':
+                // Secretary can see "Plan New Meeting" inside the "Meetings" section
+                commonMenuItems[0].items?.push({
+                    label: 'Plan New Meeting',
+                    icon: 'pi pi-fw pi-plus',
+                    routerLink: ['/meetings/new']
+                });
                 this.model = [...commonMenuItems, ...secretaryMenuItems];
                 break;
             case 'ROLE_BOARD_MEMBER':
-                this.model = [...commonMenuItems, ...boardMemberMenuItems];
+                this.model = [...commonMenuItems];
                 break;
             default:
                 this.model = commonMenuItems;
         }
-
+    
         // Add notifications menu for all roles
         this.model.push({
             label: 'Notifications',

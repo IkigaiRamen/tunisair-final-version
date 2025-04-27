@@ -3,6 +3,8 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { CalendarModule } from 'primeng/calendar';
 import { DialogModule } from 'primeng/dialog';
+import { MeetingsService } from '../../core/services/meetings.service';
+import { Meeting } from '../../core/models/meeting.model';
 
 @Component({
     selector: 'app-meeting-calendar',
@@ -18,8 +20,7 @@ import { DialogModule } from 'primeng/dialog';
             [draggable]="false"
             [resizable]="false"
             [closeOnEscape]="true"
-            [contentStyle]="{ padding: '0.5rem', height: '100%' }"
-            >
+            [contentStyle]="{ padding: '0.5rem', height: '100%' }">
             <div class="calendar-container">
                 <p-calendar 
                     [(ngModel)]="date" 
@@ -28,16 +29,22 @@ import { DialogModule } from 'primeng/dialog';
                     (onSelect)="onDateSelect($event)"
                     [style]="{ width: '100%' }"
                     [styleClass]="'custom-calendar'">
+                    <ng-template pTemplate="date" let-date>
+                        <span [ngStyle]="getDateStyle(date)">
+                            {{date.day}}
+                        </span>
+                    </ng-template>
                 </p-calendar>
-                
+
                 <div class="meetings-list" *ngIf="selectedDateMeetings.length > 0">
-                    <h3>Meetings on {{date | date:'mediumDate'}}</h3>
+                    <h3>Meetings on {{ date | date: 'mediumDate' }}</h3>
                     <ul>
                         <li *ngFor="let meeting of selectedDateMeetings">
-                            {{meeting.time}} - {{meeting.title}}
+                            {{ meeting.dateTime | date: 'shortTime' }} - {{ meeting.title }}
                         </li>
                     </ul>
                 </div>
+
                 <div class="no-meetings" *ngIf="selectedDateMeetings.length === 0 && date">
                     <p>No meetings scheduled for this date.</p>
                 </div>
@@ -79,6 +86,14 @@ import { DialogModule } from 'primeng/dialog';
                 .p-datepicker table td > span {
                     width: 2rem;
                     height: 2rem;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    border-radius: 50%;
+                }
+                .p-datepicker table td > span.has-meeting {
+                    background-color: #007bff !important;
+                    color: white !important;
                 }
             }
         }
@@ -126,51 +141,89 @@ import { DialogModule } from 'primeng/dialog';
 export class MeetingCalendarComponent implements OnInit {
     visible: boolean = false;
     date: Date | null = null;
-    selectedDateMeetings: any[] = [];
+    selectedDateMeetings: Meeting[] = [];
+    meetingsDates: Set<string> = new Set();
 
-    // Sample meetings data - replace this with your actual meetings data service
-    meetings = [
-        {
-            date: new Date(2024, 2, 25),
-            time: '10:00 AM',
-            title: 'Team Meeting'
-        },
-        {
-            date: new Date(2024, 2, 25),
-            time: '2:00 PM',
-            title: 'Client Call'
-        },
-        {
-            date: new Date(2024, 2, 26),
-            time: '11:00 AM',
-            title: 'Project Review'
-        }
-    ];
+    constructor(private meetingsService: MeetingsService) {}
 
     ngOnInit() {
         this.date = new Date();
-        this.updateSelectedDateMeetings();
+        this.loadMeetings();
     }
 
     show() {
         this.visible = true;
+        this.loadMeetings();
     }
 
     hide() {
         this.visible = false;
     }
 
-    onDateSelect(date: Date) {
+    onDateSelect(event: any) {
+        this.date = event.value;
         this.updateSelectedDateMeetings();
+    }
+
+    private loadMeetings() {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        this.meetingsService.getUpcomingMeetings(today.toISOString()).subscribe({
+            next: (meetings) => {
+                this.meetingsDates.clear();
+                meetings.forEach(meeting => {
+                    const meetingDate = new Date(meeting.dateTime);
+                    meetingDate.setHours(0, 0, 0, 0);
+                    this.meetingsDates.add(meetingDate.toISOString());
+                });
+                this.updateSelectedDateMeetings();
+            },
+            error: (error) => {
+                console.error('Error fetching meetings:', error);
+            }
+        });
     }
 
     private updateSelectedDateMeetings() {
         if (!this.date) return;
+
+        const selectedDate = new Date(this.date);
+        selectedDate.setHours(0, 0, 0, 0);
+
+        this.meetingsService.getUpcomingMeetings(selectedDate.toISOString()).subscribe({
+            next: (meetings) => {
+                this.selectedDateMeetings = meetings.filter(meeting => {
+                    const meetingDate = new Date(meeting.dateTime);
+                    meetingDate.setHours(0, 0, 0, 0);
+                    return meetingDate.getTime() === selectedDate.getTime();
+                });
+            },
+            error: (error) => {
+                console.error('Error fetching meetings for selected date:', error);
+            }
+        });
+    }
+
+    getDateStyle(date: any) {
+        const currentDate = new Date(date.year, date.month, date.day);
+        currentDate.setHours(0, 0, 0, 0);
         
-        this.selectedDateMeetings = this.meetings.filter(meeting => 
-            meeting.date.getDate() === this.date?.getDate() &&
-            meeting.date.getMonth() === this.date?.getMonth() &&
-            meeting.date.getFullYear() === this.date?.getFullYear()
-        );
+        const hasMeeting = Array.from(this.meetingsDates).some(meetingDate => {
+            const meeting = new Date(meetingDate);
+            meeting.setHours(0, 0, 0, 0);
+            return meeting.getTime() === currentDate.getTime();
+        });
+
+        return {
+            'background-color': hasMeeting ? '#007bff' : 'transparent',
+            'color': hasMeeting ? 'white' : 'inherit',
+            'border-radius': '50%',
+            'width': '2rem',
+            'height': '2rem',
+            'display': 'flex',
+            'align-items': 'center',
+            'justify-content': 'center'
+        };
     }
 }

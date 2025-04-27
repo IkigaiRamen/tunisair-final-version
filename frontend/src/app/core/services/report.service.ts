@@ -13,4 +13,22 @@ export class ReportService {
     const params = new HttpParams().set('format', format);
     return this.api.get(`${this.baseUrl}/reports`, { params, responseType: 'blob' });
   }
+  downloadMeetingReport(id: number, format: 'pdf' | 'xlsx'): Observable<Blob> {
+    const params = new HttpParams().set('format', format);
+    return this.api.get(`${this.baseUrl}/reports/meeting/${id}/report`, { params, responseType: 'blob' });
+  }
+  // Generate All Meetings Report (Excel)
+generateAllMeetingsReportExcel(): Observable<Blob> {
+  return this.api.get(`${this.baseUrl}/reports/all-meetings/excel`, {
+    responseType: 'blob',
+  });
+}
+
+// Generate All Meetings Report (PDF)
+generateAllMeetingsReportPDF(): Observable<Blob> {
+  return this.api.get(`${this.baseUrl}/reports/all-meetings/pdf`, {
+    responseType: 'blob',
+  });
+}
+
 } 

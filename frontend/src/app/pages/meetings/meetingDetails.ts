@@ -31,6 +31,7 @@ import { ConfirmationService } from 'primeng/api';
 import { FileSizePipe } from '../../shared/file-size.pipe';
 import { DropdownModule } from 'primeng/dropdown';
 import { AuthService } from '../../core/services/auth.service';
+import { ReportService } from '../../core/services/report.service';
 @Component({
     selector: 'app-meeting-details',
     standalone: true,
@@ -60,6 +61,8 @@ import { AuthService } from '../../core/services/auth.service';
                 <div class="card">
                     <div class="flex justify-between items-center mb-4">
                         <h2 class="text-2xl font-bold">{{ meeting?.title }}</h2>
+                        <p-button icon="pi pi-download" label="Download PDF" (onClick)="downloadPDF()" />
+                        <p-button icon="pi pi-download" label="Download Excel" (onClick)="downloadExcel()" />
                         <div class="flex gap-2" *ngIf="userRole !== 'ROLE_BOARD_MEMBER'">
                             <p-button icon="pi pi-pencil" label="Edit" (onClick)="editMeeting()" />
                             <p-button icon="pi pi-trash" severity="danger" label="Delete" (onClick)="deleteMeeting()" />
@@ -197,6 +200,7 @@ import { AuthService } from '../../core/services/auth.service';
                                         <td>{{ decision.content }}</td>
                                         <td>{{ decision.responsibleUser?.fullName }}</td>
                                         <td>{{ decision.deadline | date: 'medium' }}</td>
+                                        
                                         <td *ngIf="userRole !== 'ROLE_BOARD_MEMBER'">
                                             <p-button icon="pi pi-pencil" [rounded]="true" [outlined]="true" (onClick)="editDecision(decision)" />
                                             <p-button icon="pi pi-trash" severity="danger" [rounded]="true" [outlined]="true" (onClick)="deleteDecision(decision)" />
@@ -401,7 +405,8 @@ export class MeetingDetailsComponent implements OnInit {
         private documentsService: DocumentsService,
         private messageService: MessageService,
         private confirmationService: ConfirmationService,
-        private authService: AuthService
+        private authService: AuthService,
+        private reportService: ReportService
     ) {}
 
     ngOnInit() {
@@ -949,4 +954,55 @@ export class MeetingDetailsComponent implements OnInit {
             });
         }
     }
-}
+    downloadPDF() {
+        if (this.meeting?.id) {  // Check if 'id' is defined
+            this.reportService.downloadMeetingReport(this.meeting.id, 'pdf').subscribe({
+                next: (response: Blob) => {
+                    const blob = new Blob([response], { type: 'application/pdf' });
+                    const url = window.URL.createObjectURL(blob);
+                    window.open(url, '_blank'); 
+                },
+                error: (error: any) => {
+                    this.messageService.add({
+                        severity: 'error',
+                        summary: 'Error',
+                        detail: 'Failed to download PDF'    
+                    });
+                }
+            });
+        } else {
+            this.messageService.add({
+                severity: 'error',
+                summary: 'Error',
+                detail: 'Meeting ID is missing'    
+            });
+        }
+    }
+    
+    downloadExcel() {
+        if (this.meeting?.id) {  // Check if 'id' is defined
+            this.reportService.downloadMeetingReport(this.meeting.id, 'xlsx').subscribe({
+                next: (response: Blob) => {   
+                    const blob = new Blob([response], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+                    const url = window.URL.createObjectURL(blob);
+                    window.open(url, '_blank');
+                },
+                error: (error: any) => {
+                    this.messageService.add({
+                        severity: 'error',
+                        summary: 'Error',
+                        detail: 'Failed to download Excel'
+                    });
+                }
+            });
+        } else {
+            this.messageService.add({
+                severity: 'error',
+                summary: 'Error',
+                detail: 'Meeting ID is missing'    
+            });
+        }
+    }
+    
+
+}   

@@ -11,12 +11,14 @@ import { AuthService } from '../../core/services/auth.service';
 import { NotificationsService } from '../../core/services/notifications.service';
 import { NotificationLog } from '../../core/models/notification-log.model';
 import { BadgeModule } from 'primeng/badge';
-import { OverlayPanel, OverlayPanelModule } from 'primeng/overlaypanel';
+import { Popover, PopoverModule } from 'primeng/popover';
+import { MeetingsService } from '../../core/services/meetings.service';
+import { Meeting } from '../../core/models/meeting.model';
 
 @Component({
     selector: 'app-topbar',
     standalone: true,
-    imports: [RouterModule, CommonModule, StyleClassModule, AppConfigurator, MenuModule, MeetingCalendarComponent, BadgeModule, OverlayPanelModule],
+    imports: [RouterModule, CommonModule, StyleClassModule, AppConfigurator, MenuModule, MeetingCalendarComponent, BadgeModule, PopoverModule],
     template: `
         <div class="layout-topbar">
             <div class="layout-topbar-logo-container">
@@ -55,16 +57,26 @@ import { OverlayPanel, OverlayPanelModule } from 'primeng/overlaypanel';
 
                 <div class="layout-topbar-menu hidden lg:block">
                     <div class="layout-topbar-menu-content">
+                        <!-- Calendar Button with Badge showing the number of upcoming meetings -->
                         <button type="button" class="layout-topbar-action" (click)="showCalendar()">
-                            <i class="pi pi-calendar"></i>
+                            <i class="pi pi-calendar" style="font-size: 1.5rem;"></i>
                             <span>Calendar</span>
-                        </button>
-                        <button #bellButton type="button" class="layout-topbar-action relative" (click)="toggleNotifications($event)">
-                            <i class="pi pi-bell"></i>
-                            <span *ngIf="notifications.length > 0" class="p-badge">{{ notifications.length }}</span>
+                            <!-- Badge displaying the number of upcoming meetings -->
+                            <div *ngIf="upcomingMeetings.length > 0" class="p-overlay-badge">
+                                <p-badge [value]="upcomingMeetings.length" severity="danger"></p-badge>
+                            </div>
                         </button>
 
-                        <p-overlayPanel #notificationsOverlay [dismissable]="true">
+                        <!-- Bell Button with Notifications Badge -->
+                        <button #bellButton type="button" class="layout-topbar-action" (click)="toggleNotifications($event)">
+                            <div class="p-overlay-badge">
+                                <i class="pi pi-bell" style="font-size: 1.5rem;"></i>
+                                <p-badge [value]="unreadCount" severity="danger" *ngIf="unreadCount > 0"></p-badge>
+                            </div>
+                        </button>
+
+                        <!-- Notifications Popover -->
+                        <p-popover #notificationsOverlay [dismissable]="true">
                             <div class="notification-panel">
                                 <h4>Notifications</h4>
 
@@ -80,8 +92,9 @@ import { OverlayPanel, OverlayPanelModule } from 'primeng/overlaypanel';
                                     </div>
                                 </div>
                             </div>
-                        </p-overlayPanel>
+                        </p-popover>
 
+                        <!-- Profile Menu -->
                         <button type="button" class="layout-topbar-action" (click)="menu.toggle($event)">
                             <i class="pi pi-user"></i>
                             <span>Profile</span>
@@ -98,9 +111,11 @@ export class AppTopbar implements OnInit {
     @ViewChild('calendar') calendar!: MeetingCalendarComponent;
     @ViewChild('notificationsMenu') notificationsMenu!: Menu;
     @ViewChild('bellButton') bellButton!: ElementRef;
-    @ViewChild('notificationsOverlay') notificationsOverlay!: OverlayPanel;
+    @ViewChild('notificationsOverlay') notificationsOverlay!: Popover;
+    unreadCount: number = 0;
     notificationsMenuItems: MenuItem[] = [];
     notifications: NotificationLog[] = [];
+    upcomingMeetings: Meeting[] = [];
     userMenuItems: MenuItem[] = [
         {
             label: 'Profile',
@@ -115,14 +130,21 @@ export class AppTopbar implements OnInit {
     ];
     ngOnInit(): void {
         this.getNotifications();
+        this.getUpcomingMeetings();
     }
 
     constructor(
         public layoutService: LayoutService,
         private authService: AuthService,
         private router: Router,
-        private notificationsService: NotificationsService
+        private notificationsService: NotificationsService,
+        private meetingsService: MeetingsService
     ) {}
+    getUpcomingMeetings() {
+        this.meetingsService.getUpcomingMeetings(new Date().toISOString()).subscribe((meetings) => {
+            this.upcomingMeetings = meetings;
+        });
+    }
 
     toggleDarkMode() {
         this.layoutService.layoutConfig.update((state) => ({ ...state, darkTheme: !state.darkTheme }));
@@ -138,10 +160,16 @@ export class AppTopbar implements OnInit {
     }
     getNotifications() {
         this.notificationsService.list().subscribe((notifications) => {
+            console.log('Fetched notifications:', notifications);
+
             this.notifications = notifications;
+            this.unreadCount = this.notifications.filter((n) => !n.read).length;
+
+            console.log('Unread count:', this.unreadCount);
+
             this.notificationsMenuItems = this.notifications.map((n) => ({
-                label: n.message, // or whatever property you want to show
-                icon: 'pi pi-info-circle' // you can pick an appropriate icon
+                label: n.message,
+                icon: 'pi pi-info-circle'
             }));
         });
     }

@@ -15,4 +15,6 @@ public interface ReportService {
     byte[] generateMeetingAttendanceReport(Meeting meeting);
     byte[] generateTaskAssignmentReport(User user);
     byte[] generateDecisionDeadlineReport(LocalDateTime start, LocalDateTime end);
+    byte[] generateAllMeetingsReportExcel();
+    byte[] generateAllMeetingsReportPDF();
 } 

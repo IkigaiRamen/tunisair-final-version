@@ -7,6 +7,7 @@ import com.tunisair.meetingmanagement.repository.UserRepository;
 import com.tunisair.meetingmanagement.service.MeetingService;
 import com.tunisair.meetingmanagement.service.NotificationService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,6 +21,7 @@ import java.util.Set;
 @RequiredArgsConstructor
 public class MeetingServiceImpl implements MeetingService {
 
+    @Autowired
     private final MeetingRepository meetingRepository;
     private final UserRepository userRepository;
     private final NotificationService notificationService;

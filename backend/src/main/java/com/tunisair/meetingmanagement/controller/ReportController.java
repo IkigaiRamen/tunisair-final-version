@@ -34,9 +34,9 @@ public class ReportController {
 
     @Operation(summary = "Generate meeting report")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Report generated successfully"),
-        @ApiResponse(responseCode = "404", description = "Meeting not found"),
-        @ApiResponse(responseCode = "403", description = "Access denied")
+            @ApiResponse(responseCode = "200", description = "Report generated successfully"),
+            @ApiResponse(responseCode = "404", description = "Meeting not found"),
+            @ApiResponse(responseCode = "403", description = "Access denied")
     })
     @GetMapping("/meeting/{id}/report")
     public ResponseEntity<byte[]> downloadMeetingReport(
@@ -63,14 +63,37 @@ public class ReportController {
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + filename)
                 .contentType(mediaType)
                 .body(report);
+    }    @Operation(summary = "Generate all meetings report (Excel)")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Report generated successfully"),
+            @ApiResponse(responseCode = "403", description = "Access denied")
+    })
+    @GetMapping("/all-meetings/excel")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SECRETARY')")
+    public ResponseEntity<byte[]> generateAllMeetingsReportExcel() {
+        byte[] report = reportService.generateAllMeetingsReportExcel();
+        return createResponseEntity(report, "all_meetings_report.xlsx");
     }
+
+    @Operation(summary = "Generate all meetings report (PDF)")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Report generated successfully"),
+            @ApiResponse(responseCode = "403", description = "Access denied")
+    })
+    @GetMapping("/all-meetings/pdf")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SECRETARY')")
+    public ResponseEntity<byte[]> generateAllMeetingsReportPDF() {
+        byte[] report = reportService.generateAllMeetingsReportPDF();
+        return createResponseEntity(report, "all_meetings_report.pdf");
+    }
+
 
 
     @Operation(summary = "Generate user activity report")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Report generated successfully"),
-        @ApiResponse(responseCode = "404", description = "User not found"),
-        @ApiResponse(responseCode = "403", description = "Access denied")
+            @ApiResponse(responseCode = "200", description = "Report generated successfully"),
+            @ApiResponse(responseCode = "404", description = "User not found"),
+            @ApiResponse(responseCode = "403", description = "Access denied")
     })
     @GetMapping("/user-activity/{userId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'SECRETARY')")
@@ -88,9 +111,9 @@ public class ReportController {
 
     @Operation(summary = "Generate task completion report")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Report generated successfully"),
-        @ApiResponse(responseCode = "400", description = "Invalid date range"),
-        @ApiResponse(responseCode = "403", description = "Access denied")
+            @ApiResponse(responseCode = "200", description = "Report generated successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid date range"),
+            @ApiResponse(responseCode = "403", description = "Access denied")
     })
     @GetMapping("/task-completion")
     @PreAuthorize("hasAnyRole('ADMIN', 'SECRETARY')")
@@ -105,9 +128,9 @@ public class ReportController {
 
     @Operation(summary = "Generate decision implementation report")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Report generated successfully"),
-        @ApiResponse(responseCode = "400", description = "Invalid date range"),
-        @ApiResponse(responseCode = "403", description = "Access denied")
+            @ApiResponse(responseCode = "200", description = "Report generated successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid date range"),
+            @ApiResponse(responseCode = "403", description = "Access denied")
     })
     @GetMapping("/decision-implementation")
     @PreAuthorize("hasAnyRole('ADMIN', 'SECRETARY')")
@@ -122,9 +145,9 @@ public class ReportController {
 
     @Operation(summary = "Generate meeting attendance report")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Report generated successfully"),
-        @ApiResponse(responseCode = "404", description = "Meeting not found"),
-        @ApiResponse(responseCode = "403", description = "Access denied")
+            @ApiResponse(responseCode = "200", description = "Report generated successfully"),
+            @ApiResponse(responseCode = "404", description = "Meeting not found"),
+            @ApiResponse(responseCode = "403", description = "Access denied")
     })
     @GetMapping("/meeting-attendance/{meetingId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'SECRETARY')")
@@ -137,9 +160,9 @@ public class ReportController {
 
     @Operation(summary = "Generate task assignment report")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Report generated successfully"),
-        @ApiResponse(responseCode = "404", description = "User not found"),
-        @ApiResponse(responseCode = "403", description = "Access denied")
+            @ApiResponse(responseCode = "200", description = "Report generated successfully"),
+            @ApiResponse(responseCode = "404", description = "User not found"),
+            @ApiResponse(responseCode = "403", description = "Access denied")
     })
     @GetMapping("/task-assignment/{userId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'SECRETARY')")
@@ -152,9 +175,9 @@ public class ReportController {
 
     @Operation(summary = "Generate decision deadline report")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Report generated successfully"),
-        @ApiResponse(responseCode = "400", description = "Invalid date range"),
-        @ApiResponse(responseCode = "403", description = "Access denied")
+            @ApiResponse(responseCode = "200", description = "Report generated successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid date range"),
+            @ApiResponse(responseCode = "403", description = "Access denied")
     })
     @GetMapping("/decision-deadlines")
     @PreAuthorize("hasAnyRole('ADMIN', 'SECRETARY')")
@@ -174,4 +197,4 @@ public class ReportController {
                 .contentLength(report.length)
                 .body(report);
     }
-} 
+}
