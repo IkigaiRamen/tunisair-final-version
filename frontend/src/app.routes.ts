@@ -19,6 +19,7 @@ import { TasksDashboardComponent } from './app/pages/tasks/tasks-dashboard';
 import { DecisionsLogComponent } from './app/pages/decisions/decisions-log';
 import { MeetingSummariesComponent } from './app/pages/reports/meeting-summaries';
 import { TaskProgressComponent } from './app/pages/reports/task-progress';
+import { NotificationsComponent } from './app/pages/notifications/notifications.component';
 
 export const appRoutes: Routes = [
     {
@@ -62,7 +63,8 @@ export const appRoutes: Routes = [
                 ]
             },   
             { path: 'uikit', loadChildren: () => import('./app/pages/uikit/uikit.routes') },
-            { path: 'pages', loadChildren: () => import('./app/pages/pages.routes') }
+            { path: 'pages', loadChildren: () => import('./app/pages/pages.routes') },
+            { path: 'notifications', component: NotificationsComponent }
         ]
     },
     { path: 'landing', component: Landing },

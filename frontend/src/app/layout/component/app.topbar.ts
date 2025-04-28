@@ -76,22 +76,47 @@ import { Meeting } from '../../core/models/meeting.model';
                         </button>
 
                         <!-- Notifications Popover -->
-                        <p-popover #notificationsOverlay [dismissable]="true">
+                        <p-popover #notificationsOverlay 
+                            [dismissable]="true" 
+                            [style]="{ width: '320px' }"
+                            [styleClass]="'notification-popover'">
+                            <ng-template pTemplate="content">
                             <div class="notification-panel">
+                                    <div class="notification-header">
                                 <h4>Notifications</h4>
+                                        <button *ngIf="unreadCount > 0" class="mark-all-read" (click)="markAllAsRead()">
+                                            Mark all as read
+                                        </button>
+                                    </div>
 
                                 <div *ngIf="notifications.length === 0" class="no-notifications">
+                                        <i class="pi pi-bell-slash"></i>
                                     <p>No new notifications</p>
                                 </div>
 
-                                <div *ngFor="let notification of notifications" class="notification-item">
-                                    <i class="pi pi-info-circle"></i>
-                                    <div>
+                                    <div class="notification-list">
+                                        <div *ngFor="let notification of notifications" 
+                                            class="notification-item" 
+                                            [ngClass]="{'unread': !notification.read}"
+                                            (click)="markAsRead(notification)">
+                                            <div class="notification-icon">
+                                                <i class="pi" [ngClass]="notification.type === 'EMAIL' ? 'pi-envelope' : 'pi-info-circle'"></i>
+                                            </div>
+                                            <div class="notification-content">
                                         <p class="notification-message">{{ notification.message }}</p>
-                                        <small>{{ notification.sentAt | date: 'short' }}</small>
+                                                <small class="notification-time">{{ notification.sentAt | date: 'short' }}</small>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="notification-footer">
+                                        <button class="view-all-btn" (click)="viewAllNotifications()">
+                                            <i class="pi pi-list"></i>
+                                            View All Notifications
+                                        </button>
                                     </div>
                                 </div>
-                            </div>
+                            </ng-template>
                         </p-popover>
 
                         <!-- Profile Menu -->
@@ -160,21 +185,43 @@ export class AppTopbar implements OnInit {
     }
     getNotifications() {
         this.notificationsService.list().subscribe((notifications) => {
-            console.log('Fetched notifications:', notifications);
-
-            this.notifications = notifications;
+            // Sort notifications by date (newest first) and take only the last 5
+            this.notifications = notifications
+                .sort((a, b) => new Date(b.sentAt).getTime() - new Date(a.sentAt).getTime())
+                .slice(0, 5);
             this.unreadCount = this.notifications.filter((n) => !n.read).length;
-
-            console.log('Unread count:', this.unreadCount);
-
-            this.notificationsMenuItems = this.notifications.map((n) => ({
-                label: n.message,
-                icon: 'pi pi-info-circle'
-            }));
         });
     }
 
     toggleNotifications(event: Event) {
         this.notificationsOverlay.toggle(event);
+        // Mark all notifications as read when opening the panel
+        if (this.unreadCount > 0) {
+            this.markAllAsRead();
+        }
+    }
+
+    markAsRead(notification: NotificationLog) {
+        if (!notification.read) {
+            this.notificationsService.markRead(notification.id).subscribe(() => {
+                notification.read = true;
+                this.unreadCount = this.notifications.filter(n => !n.read).length;
+            });
+        }
+    }
+
+    markAllAsRead() {
+        const unreadNotifications = this.notifications.filter(n => !n.read);
+        unreadNotifications.forEach(notification => {
+            this.notificationsService.markRead(notification.id).subscribe(() => {
+                notification.read = true;
+            });
+        });
+        this.unreadCount = 0;
+    }
+
+    viewAllNotifications() {
+        this.notificationsOverlay.hide();
+        this.router.navigate(['/notifications']);
     }
 }
