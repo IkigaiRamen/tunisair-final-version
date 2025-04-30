@@ -196,12 +196,6 @@ export class DecisionsLogComponent implements OnInit {
                     console.log(`Decision ID: ${decision.id}, Content: ${decision.content}, Tasks:`, decision.tasks);
                 });
                 this.decisions = decisions;
-                this.messageService.add({
-                    severity: 'success',
-                    summary: 'Success',
-                    detail: `Loaded ${decisions.length} decisions`,
-                    life: 3000
-                });
             },
             error: (error) => {
                 console.error('Error loading decisions:', error);
@@ -219,12 +213,6 @@ export class DecisionsLogComponent implements OnInit {
         this.usersService.getAll().subscribe({
             next: (users) => {
                 this.userList = users;
-                this.messageService.add({
-                    severity: 'success',
-                    summary: 'Success',
-                    detail: `Loaded ${users.length} users`,
-                    life: 3000
-                });
             },
             error: (error) => {
                 this.messageService.add({

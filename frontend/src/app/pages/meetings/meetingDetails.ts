@@ -81,6 +81,17 @@ import { ReportService } from '../../core/services/report.service';
                                             <p>{{ meeting?.dateTime | date: 'medium' }}</p>
                                         </div>
                                         <div>
+                                            <label class="font-bold">Virtual Meeting Link:</label>
+                                            <div *ngIf="meeting?.virtualLink">
+                                                <a [href]="meeting?.virtualLink" target="_blank" 
+                                                   class="text-primary hover:underline flex items-center gap-2">
+                                                    <i class="pi pi-external-link"></i>
+                                                    Join Virtual Meeting
+                                                </a>
+                                            </div>
+                                            <p *ngIf="!meeting?.virtualLink" class="text-gray-500">In-person meeting</p>
+                                        </div>
+                                        <div>
                                             <label class="font-bold">Created By:</label>
                                             <p>{{ meeting?.createdBy?.fullName }}</p>
                                         </div>
