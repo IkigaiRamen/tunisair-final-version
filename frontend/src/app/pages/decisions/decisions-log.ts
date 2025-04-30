@@ -250,6 +250,12 @@ export class DecisionsLogComponent implements OnInit {
 
     editDecision(decision: Decision) {
         this.decision = { ...decision };
+        if (this.decision.responsibleUser) {
+            const selectedUser = this.userList.find(user => user.id === this.decision.responsibleUser.id);
+            if (selectedUser) {
+                this.decision.responsibleUser = selectedUser;
+            }
+        }
         this.decisionDialog = true;
         this.messageService.add({
             severity: 'info',

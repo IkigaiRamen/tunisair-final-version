@@ -1,5 +1,130 @@
 # Application Diagrams
 
+## General Use Case Diagram
+
+```mermaid
+graph TD
+    subgraph Actors
+        Admin[Administrator]
+        Manager[Manager]
+        User[Regular User]
+        Guest[Guest User]
+    end
+
+    subgraph Authentication
+        Login[Login to System]
+        Register[Register Account]
+        ResetPassword[Reset Password]
+        ManageProfile[Manage Profile]
+    end
+
+    subgraph Meeting Management
+        CreateMeeting[Create Meeting]
+        EditMeeting[Edit Meeting]
+        DeleteMeeting[Delete Meeting]
+        ViewMeetings[View Meetings]
+        JoinMeeting[Join Meeting]
+        ManageParticipants[Manage Participants]
+    end
+
+    subgraph Document Management
+        UploadDoc[Upload Document]
+        DownloadDoc[Download Document]
+        ViewDoc[View Document]
+        EditDoc[Edit Document]
+        DeleteDoc[Delete Document]
+        ShareDoc[Share Document]
+    end
+
+    subgraph Task Management
+        CreateTask[Create Task]
+        AssignTask[Assign Task]
+        UpdateTask[Update Task Status]
+        ViewTasks[View Tasks]
+        TrackProgress[Track Progress]
+    end
+
+    subgraph Decision Management
+        MakeDecision[Make Decision]
+        TrackDecision[Track Decision]
+        ViewDecisions[View Decisions]
+        UpdateDecision[Update Decision]
+    end
+
+    subgraph System Administration
+        ManageUsers[Manage Users]
+        ManageRoles[Manage Roles]
+        SystemConfig[Configure System]
+        GenerateReports[Generate Reports]
+        ViewLogs[View System Logs]
+    end
+
+    %% Actor Connections
+    Admin --> SystemConfig
+    Admin --> ManageUsers
+    Admin --> ManageRoles
+    Admin --> GenerateReports
+    Admin --> ViewLogs
+
+    Manager --> CreateMeeting
+    Manager --> EditMeeting
+    Manager --> DeleteMeeting
+    Manager --> MakeDecision
+    Manager --> AssignTask
+    Manager --> UploadDoc
+    Manager --> ShareDoc
+
+    User --> ViewMeetings
+    User --> JoinMeeting
+    User --> ViewDoc
+    User --> DownloadDoc
+    User --> ViewTasks
+    User --> UpdateTask
+    User --> ViewDecisions
+
+    Guest --> Register
+    Guest --> Login
+    Guest --> ResetPassword
+
+    %% Authentication Connections
+    Admin --> Login
+    Manager --> Login
+    User --> Login
+    Admin --> ManageProfile
+    Manager --> ManageProfile
+    User --> ManageProfile
+
+    %% Meeting Management Connections
+    Manager --> ManageParticipants
+    User --> ViewMeetings
+    User --> JoinMeeting
+
+    %% Document Management Connections
+    Manager --> UploadDoc
+    Manager --> EditDoc
+    Manager --> DeleteDoc
+    User --> ViewDoc
+    User --> DownloadDoc
+
+    %% Task Management Connections
+    Manager --> CreateTask
+    Manager --> AssignTask
+    User --> UpdateTask
+    User --> ViewTasks
+    User --> TrackProgress
+
+    %% Decision Management Connections
+    Manager --> MakeDecision
+    Manager --> UpdateDecision
+    User --> ViewDecisions
+    User --> TrackDecision
+
+    style Admin fill:#f9f,stroke:#333,stroke-width:2px
+    style Manager fill:#bbf,stroke:#333,stroke-width:2px
+    style User fill:#bfb,stroke:#333,stroke-width:2px
+    style Guest fill:#fbb,stroke:#333,stroke-width:2px
+```
+
 ## Use Case Diagram
 
 ```mermaid
@@ -56,12 +181,21 @@ classDiagram
         +List~Meeting~ meetings
         +List~Task~ tasks
         +List~Decision~ decisions
+        +getFullName() String
+        +hasRole(String roleName) Boolean
+        +canManageMeeting(Meeting meeting) Boolean
+        +canViewDocument(Document document) Boolean
+        +getUpcomingMeetings() List~Meeting~
+        +getPendingTasks() List~Task~
     }
     
     class Role {
         +Long id
         +String name
         +List~User~ users
+        +hasPermission(String permission) Boolean
+        +addPermission(String permission) void
+        +removePermission(String permission) void
     }
     
     class Meeting {
@@ -76,6 +210,14 @@ classDiagram
         +List~User~ participants
         +List~Document~ documents
         +List~Decision~ decisions
+        +isUpcoming() Boolean
+        +isInProgress() Boolean
+        +isCompleted() Boolean
+        +addParticipant(User user) void
+        +removeParticipant(User user) void
+        +addDocument(Document document) void
+        +addDecision(Decision decision) void
+        +getDuration() Duration
     }
     
     class Document {
@@ -89,6 +231,11 @@ classDiagram
         +User uploadedBy
         +Meeting meeting
         +List~DocumentVersion~ versions
+        +getLatestVersion() DocumentVersion
+        +createNewVersion(File file) DocumentVersion
+        +getDownloadUrl() String
+        +getPreviewUrl() String
+        +canBeEditedBy(User user) Boolean
     }
     
     class Task {
@@ -101,6 +248,11 @@ classDiagram
         +User assignee
         +Decision decision
         +Meeting meeting
+        +isOverdue() Boolean
+        +updateStatus(TaskStatus newStatus) void
+        +addComment(String comment) void
+        +getComments() List~Comment~
+        +getTimeRemaining() Duration
     }
     
     class Decision {
@@ -112,6 +264,12 @@ classDiagram
         +User responsibleUser
         +Meeting meeting
         +List~Task~ tasks
+        +isOverdue() Boolean
+        +addTask(Task task) void
+        +updateStatus(DecisionStatus newStatus) void
+        +getProgress() Double
+        +getCompletedTasks() List~Task~
+        +getPendingTasks() List~Task~
     }
     
     User "1" -- "1" Role : has

@@ -261,10 +261,25 @@ export class meetings implements OnInit {
 
     ngOnInit() {
         this.loadDemoData();
+    }
+
+    loadDemoData() {
+        // First load users, then load meetings
         this.userService.getAll().subscribe({
             next: (users) => {
                 this.userList = users;
-                console.log('Users loaded:', this.userList); // Debug log
+                // Now load meetings after we have the userList
+                this.meetingService.list().subscribe((data) => {
+                    // Map participants to full user objects
+                    const meetingsWithFullParticipants = data.map(meeting => ({
+                        ...meeting,
+                        participants: meeting.participants?.map(participant => {
+                            const fullUser = this.userList.find(u => u.id === participant.id);
+                            return fullUser || participant;
+                        }) || []
+                    }));
+                    this.meetings.set(meetingsWithFullParticipants);
+                });
             },
             error: (err) => {
                 console.error('Error fetching users', err);
@@ -276,22 +291,16 @@ export class meetings implements OnInit {
                 });
             }
         });
-    }
-
-    loadDemoData() {
-        this.meetingService.list().subscribe((data) => {
-            this.meetings.set(data);
-        });
 
         // Define the columns based on the fields in your Meeting model
         this.cols = [
-            { field: 'id', header: 'ID' }, // Meeting ID
-            { field: 'title', header: 'Title' }, // Meeting Title
-            { field: 'dateTime', header: 'Date & Time' }, // Date and Time
-            { field: 'createdBy.name', header: 'Created By' }, // Created By - User name
-            { field: 'participants', header: 'Participants' }, // List of Participants (you may want to format this)
-            { field: 'virtualLink', header: 'Virtual Link' }, // Virtual Link
-            { field: 'actions', header: 'Actions' } // Actions column for edit/delete buttons
+            { field: 'id', header: 'ID' },
+            { field: 'title', header: 'Title' },
+            { field: 'dateTime', header: 'Date & Time' },
+            { field: 'createdBy.name', header: 'Created By' },
+            { field: 'participants', header: 'Participants' },
+            { field: 'virtualLink', header: 'Virtual Link' },
+            { field: 'actions', header: 'Actions' }
         ];
 
         this.exportColumns = this.cols.map((col) => ({ title: col.header, dataKey: col.field }));
