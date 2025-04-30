@@ -57,7 +57,7 @@ import { RoleName } from '../../core/models/role-name.model';
         </div>
     `
 })
-export class signup implements OnInit {
+export class SignupAdmin implements OnInit {
     signupForm!: FormGroup;
     loading = false;
 
@@ -83,9 +83,9 @@ export class signup implements OnInit {
         }
         this.loading = true;
         this.authService
-            .signup({
+            .signupAdmin({
                 ...this.signupForm.value,
-                roles: ['ROLE_USER']
+                roles: ['ROLE_ADMIN']
             })
             .subscribe({
                 next: (res) => {

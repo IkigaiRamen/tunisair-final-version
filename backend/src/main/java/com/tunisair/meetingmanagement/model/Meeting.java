@@ -56,6 +56,9 @@ public class Meeting {
     @OneToMany(mappedBy = "meeting", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<Decision> decisions = new HashSet<>();
 
+    @Column(nullable = true)
+    private String virtualLink;
+
     private LocalDateTime createdAt = LocalDateTime.now();
     private LocalDateTime updatedAt = LocalDateTime.now();
 

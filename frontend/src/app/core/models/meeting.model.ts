@@ -14,4 +14,5 @@ export interface Meeting {
   decisions: Decision[];
   createdAt: string;
   updatedAt: string;
+  virtualLink?: string;
 } 

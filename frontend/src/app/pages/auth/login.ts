@@ -41,6 +41,10 @@ import { RoleName } from '../../core/models/role-name.model';
                               <div class="flex items-center justify-between mt-2 mb-8 gap-8">
                                   <span class="font-medium no-underline ml-2 text-right cursor-pointer text-red-600">Forgot password?</span>
                               </div>
+                              <div class="flex items-center justify-center mb-4">
+                                  <span class="text-surface-600 dark:text-surface-300">Don't have an account?</span>
+                                  <a routerLink="/signup" class="text-primary hover:underline ml-2">Sign up</a>
+                              </div>
                               <p-button type="submit" label="Sign In" styleClass="w-full p-button-danger" [loading]="loading"></p-button>
                           </div>
                       </form>

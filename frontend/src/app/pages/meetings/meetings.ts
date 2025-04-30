@@ -112,6 +112,9 @@ interface ExportColumn {
                                 <th pSortableColumn="Participants" style="min-width: 12rem">
                                     Participants <p-sortIcon field="Participants" />
                                 </th>
+                                <th pSortableColumn="virtualLink" style="min-width: 12rem">
+                                    Virtual Link <p-sortIcon field="virtualLink" />
+                                </th>
                                 <th style="min-width: 8rem">Actions</th>
                             </tr>
                         </ng-template>
@@ -130,6 +133,13 @@ interface ExportColumn {
                                                severity="info" 
                                                styleClass="text-xs" />
                                     </div>
+                                </td>
+                                <td>
+                                    <a *ngIf="meeting.virtualLink" [href]="meeting.virtualLink" target="_blank" 
+                                       class="text-primary hover:underline">
+                                        Join Meeting
+                                    </a>
+                                    <span *ngIf="!meeting.virtualLink" class="text-gray-500">-</span>
                                 </td>
                                 <td>
                                     <div class="flex gap-2">
@@ -196,6 +206,12 @@ interface ExportColumn {
                                    dateFormat="yy-mm-dd" [showIcon]="true" class="w-full" />
                     </div>
 
+                    <div class="field">
+                        <label for="virtualLink" class="block font-bold mb-2">Virtual Meeting Link</label>
+                        <input type="url" pInputText fluid id="virtualLink" [(ngModel)]="meeting.virtualLink" 
+                               placeholder="Enter virtual meeting link (optional)" />
+                        <small class="text-gray-500">Leave empty if this is an in-person meeting</small>
+                    </div>
 
                 </div>
             </ng-template>
@@ -245,10 +261,25 @@ export class meetings implements OnInit {
 
     ngOnInit() {
         this.loadDemoData();
+    }
+
+    loadDemoData() {
+        // First load users, then load meetings
         this.userService.getAll().subscribe({
             next: (users) => {
                 this.userList = users;
-                console.log('Users loaded:', this.userList); // Debug log
+                // Now load meetings after we have the userList
+                this.meetingService.list().subscribe((data) => {
+                    // Map participants to full user objects
+                    const meetingsWithFullParticipants = data.map(meeting => ({
+                        ...meeting,
+                        participants: meeting.participants?.map(participant => {
+                            const fullUser = this.userList.find(u => u.id === participant.id);
+                            return fullUser || participant;
+                        }) || []
+                    }));
+                    this.meetings.set(meetingsWithFullParticipants);
+                });
             },
             error: (err) => {
                 console.error('Error fetching users', err);
@@ -260,21 +291,16 @@ export class meetings implements OnInit {
                 });
             }
         });
-    }
-
-    loadDemoData() {
-        this.meetingService.list().subscribe((data) => {
-            this.meetings.set(data);
-        });
 
         // Define the columns based on the fields in your Meeting model
         this.cols = [
-            { field: 'id', header: 'ID' }, // Meeting ID
-            { field: 'title', header: 'Title' }, // Meeting Title
-            { field: 'dateTime', header: 'Date & Time' }, // Date and Time
-            { field: 'createdBy.name', header: 'Created By' }, // Created By - User name
-            { field: 'participants', header: 'Participants' }, // List of Participants (you may want to format this)
-            { field: 'actions', header: 'Actions' } // Actions column for edit/delete buttons
+            { field: 'id', header: 'ID' },
+            { field: 'title', header: 'Title' },
+            { field: 'dateTime', header: 'Date & Time' },
+            { field: 'createdBy.name', header: 'Created By' },
+            { field: 'participants', header: 'Participants' },
+            { field: 'virtualLink', header: 'Virtual Link' },
+            { field: 'actions', header: 'Actions' }
         ];
 
         this.exportColumns = this.cols.map((col) => ({ title: col.header, dataKey: col.field }));
@@ -287,15 +313,16 @@ export class meetings implements OnInit {
     openNew() {
         // Initialize meeting with default values
         this.meeting = {
-            id: 0, // or null, if id can be null in your model
+            id: 0,
             title: '',
             dateTime: '',
-            createdBy: {} as User, // assuming you have a User interface
+            createdBy: {} as User,
             participants: [],
             documents: [],
             decisions: [],
-            createdAt: new Date().toISOString(), // or set appropriately
-            updatedAt: new Date().toISOString() // or set appropriately
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            virtualLink: ''
         };
         this.submitted = false;
         this.meetingDialog = true;

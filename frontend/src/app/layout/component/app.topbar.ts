@@ -141,21 +141,12 @@ export class AppTopbar implements OnInit {
     notificationsMenuItems: MenuItem[] = [];
     notifications: NotificationLog[] = [];
     upcomingMeetings: Meeting[] = [];
-    userMenuItems: MenuItem[] = [
-        {
-            label: 'Profile',
-            icon: 'pi pi-user',
-            routerLink: '/profile'
-        },
-        {
-            label: 'Logout',
-            icon: 'pi pi-sign-out',
-            command: () => this.logout()
-        }
-    ];
+    userMenuItems: MenuItem[] = [];
+
     ngOnInit(): void {
         this.getNotifications();
         this.getUpcomingMeetings();
+        this.updateUserMenuItems();
     }
 
     constructor(
@@ -165,6 +156,37 @@ export class AppTopbar implements OnInit {
         private notificationsService: NotificationsService,
         private meetingsService: MeetingsService
     ) {}
+
+    updateUserMenuItems() {
+        const isLoggedIn = this.authService.getToken() !== null;
+        this.userMenuItems = [
+            {
+                label: 'Profile',
+                icon: 'pi pi-user',
+                routerLink: '/profile',
+                visible: isLoggedIn
+            },
+            {
+                label: 'Login',
+                icon: 'pi pi-sign-in',
+                routerLink: '/login',
+                visible: !isLoggedIn
+            },
+            {
+                label: 'Sign Up',
+                icon: 'pi pi-user-plus',
+                routerLink: '/signup',
+                visible: !isLoggedIn
+            },
+            {
+                label: 'Logout',
+                icon: 'pi pi-sign-out',
+                command: () => this.logout(),
+                visible: isLoggedIn
+            }
+        ];
+    }
+
     getUpcomingMeetings() {
         this.meetingsService.getUpcomingMeetings(new Date().toISOString()).subscribe((meetings) => {
             this.upcomingMeetings = meetings;

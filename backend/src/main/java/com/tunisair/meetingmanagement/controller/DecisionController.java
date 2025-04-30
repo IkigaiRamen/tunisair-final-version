@@ -103,6 +103,7 @@ public class DecisionController {
     @GetMapping("/meeting/{meetingId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'SECRETARY', 'BOARD_MEMBER')")
     public ResponseEntity<List<Decision>> getDecisionsByMeeting(@PathVariable Long meetingId) {
+        // Note: Meeting now has a nullable virtualLink property for virtual meetings
         System.out.println("Fetching decisions for meeting ID: " + meetingId);
         Meeting meeting = meetingService.getMeetingById(meetingId)
                 .orElseThrow(() -> new RuntimeException("Meeting not found with id: " + meetingId));
