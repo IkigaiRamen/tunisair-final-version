@@ -215,13 +215,16 @@ import { ReportService } from '../../core/services/report.service';
                             <div class="mb-4">
                                 <p-button icon="pi pi-plus" label="Add Task" (onClick)="openNewTask()" />
                             </div>
-                            <p-table [value]="tasks" [paginator]="true" [rows]="10" [showCurrentPageReport]="true" currentPageReportTemplate="Showing {first} to {last} of {totalRecords} tasks" [rowsPerPageOptions]="[10, 25, 50]">
+                            <p-table [value]="tasks" [paginator]="true" [rows]="10" [showCurrentPageReport]="true" 
+                                     currentPageReportTemplate="Showing {first} to {last} of {totalRecords} tasks" 
+                                     [rowsPerPageOptions]="[10, 25, 50]">
                                 <ng-template pTemplate="header">
                                     <tr>
                                         <th>Description</th>
                                         <th>Status</th>
                                         <th>Assigned To</th>
                                         <th>Deadline</th>
+                                        <th>Decision</th>
                                         <th *ngIf="userRole !== 'ROLE_BOARD_MEMBER'">Actions</th>
                                     </tr>
                                 </ng-template>
@@ -233,9 +236,20 @@ import { ReportService } from '../../core/services/report.service';
                                         </td>
                                         <td>{{ task.assignedTo?.fullName }}</td>
                                         <td>{{ task.deadline | date: 'medium' }}</td>
+                                        <td>{{ task.decision?.content }}</td>
                                         <td *ngIf="userRole !== 'ROLE_BOARD_MEMBER'">
                                             <p-button icon="pi pi-pencil" [rounded]="true" [outlined]="true" (onClick)="editTask(task)" />
                                             <p-button icon="pi pi-trash" severity="danger" [rounded]="true" [outlined]="true" (onClick)="deleteTask(task)" />
+                                        </td>
+                                    </tr>
+                                </ng-template>
+                                <ng-template pTemplate="emptymessage">
+                                    <tr>
+                                        <td colspan="6" class="text-center p-4">
+                                            <div class="flex flex-column align-items-center justify-content-center">
+                                                <i class="pi pi-tasks text-4xl text-gray-400 mb-2"></i>
+                                                <span class="text-gray-500">No tasks found</span>
+                                            </div>
                                         </td>
                                     </tr>
                                 </ng-template>
@@ -265,103 +279,117 @@ import { ReportService } from '../../core/services/report.service';
             <ng-template pTemplate="footer">
                 <p-button label="Cancel" icon="pi pi-times" (onClick)="hideDecisionDialog()" />
                 <p-button label="Save" icon="pi pi-check" (onClick)="saveDecision()" />
-            </ng-template>
-        </p-dialog>
+                </ng-template>
+            </p-dialog>
 
-        <!-- Task Dialog -->
-        <p-dialog [(visible)]="taskDialog" [style]="{ width: '450px' }" header="Task Details" [modal]="true">
-            <div class="flex flex-col gap-4">
-                <div>
-                    <label for="decision" class="block font-bold mb-2">Decision</label>
-                    <p-dropdown [options]="decisions" [(ngModel)]="task.decision" optionLabel="content" placeholder="Select a Decision" [style]="{ width: '100%' }" [scrollHeight]="'200px'" appendTo="body"> </p-dropdown>
-                </div>
-                <div>
-                    <label for="description" class="block font-bold mb-2">Description</label>
-                    <textarea pTextarea id="description" [(ngModel)]="task.description" rows="3" class="w-full"></textarea>
-                </div>
-                <div>
-                    <label for="status" class="block font-bold mb-2">Status</label>
-                    <p-select fluid [(ngModel)]="task.status" [options]="taskStatuses" optionLabel="name" optionValue="value" />
-                </div>
-                <div>
-                    <label for="assignedTo" class="block font-bold mb-2">Assigned To</label>
-                    <p-dropdown [options]="userList" [(ngModel)]="task.assignedTo" optionLabel="fullName" placeholder="Select user" [style]="{ width: '100%' }" [scrollHeight]="'200px'" appendTo="body"> </p-dropdown>
-                </div>
-                <div>
-                    <label for="deadline" class="block font-bold mb-2">Deadline</label>
-                    <p-calendar fluid [(ngModel)]="task.deadline" [showTime]="true" dateFormat="yy-mm-dd" />
-                </div>
-            </div>
-            <ng-template pTemplate="footer">
-                <p-button label="Cancel" icon="pi pi-times" (onClick)="hideTaskDialog()" />
-                <p-button label="Save" icon="pi pi-check" (onClick)="saveTask()" />
-            </ng-template>
-        </p-dialog> 
-
-        <!-- Meeting Edit Dialog -->
-        <p-dialog [(visible)]="meetingDialog" [style]="{ width: '600px' }" header="Edit Meeting" [modal]="true" 
-                  [draggable]="false" [resizable]="false" styleClass="p-fluid">
-            <ng-template #content>
+            <!-- Task Dialog -->
+            <p-dialog [(visible)]="taskDialog" [style]="{width: '600px'}" header="Task Details" [modal]="true" 
+                      [draggable]="false" [resizable]="false" styleClass="p-fluid">
                 <div class="flex flex-col gap-6">
                     <div class="field">
-                        <label for="title" class="block font-bold mb-2">Title</label>
-                        <input type="text" pInputText fluid id="title" [(ngModel)]="editingMeeting.title" required autofocus />
-                        <small class="text-red-500" *ngIf="submitted && !editingMeeting.title">Title is required.</small>
+                        <label for="description" class="block font-bold mb-2">Task Description</label>
+                        <textarea pInputText id="description" [(ngModel)]="task.description" rows="3" 
+                                  placeholder="Enter task description..." class="w-full"></textarea>
                     </div>
 
                     <div class="field">
-                        <label for="agenda" class="block font-bold mb-2">Agenda</label>
-                        <textarea pTextarea fluid id="agenda" [(ngModel)]="editingMeeting.agenda" required rows="3" 
-                                  placeholder="Enter meeting agenda..."></textarea>
+                        <label for="status" class="block font-bold mb-2">Status</label>
+                        <p-dropdown [options]="['PENDING', 'IN_PROGRESS', 'COMPLETED']" [(ngModel)]="task.status" 
+                                  placeholder="Select status" styleClass="w-full" />
                     </div>
 
                     <div class="field">
-                        <label for="objectives" class="block font-bold mb-2">Objectives</label>
-                        <textarea pTextarea fluid id="objectives" [(ngModel)]="editingMeeting.objectives" required rows="3" 
-                                  placeholder="Enter meeting objectives..."></textarea>
+                        <label for="assignedTo" class="block font-bold mb-2">Assigned To</label>
+                        <p-dropdown [options]="userList" [(ngModel)]="task.assignedTo" 
+                                  optionLabel="fullName" placeholder="Select user"
+                                  styleClass="w-full" />
                     </div>
+
                     <div class="field">
-                        <label for="participants" class="block font-bold mb-2">Participants</label>
-                        <p-multiSelect [options]="userList" [(ngModel)]="editingMeeting.participants" 
-                                     optionLabel="fullName" placeholder="Select Participants" 
-                                     display="chip" class="w-full"
-                                     [scrollHeight]="'200px'"
-                                     [panelStyle]="{'min-width': '100%'}"
-                                     [style]="{'width': '100%'}"
-                                     [virtualScroll]="true"
-                                     [virtualScrollItemSize]="34"
-                                     appendTo="body">
-                            <ng-template let-user pTemplate="item">
-                                <div class="flex align-items-center">
-                                    <div>{{user.fullName}}</div>
-                                </div>
-                            </ng-template>
-                            <ng-template let-user pTemplate="selectedItem">
-                                <div class="flex align-items-center">
-                                    <div>{{user.fullName}}</div>
-                                </div>
-                            </ng-template>
-                        </p-multiSelect>
+                        <label for="deadline" class="block font-bold mb-2">Deadline</label>
+                        <p-calendar [(ngModel)]="task.deadline" [showTime]="true" dateFormat="yy-mm-dd" 
+                                   [showIcon]="true" styleClass="w-full" />
                     </div>
+
                     <div class="field">
-                        <label for="dateTime" class="block font-bold mb-2">Date & Time</label>
-                        <p-calendar fluid [(ngModel)]="editingMeeting.dateTime" [showTime]="true" hourFormat="24" 
-                                   dateFormat="yy-mm-dd" [showIcon]="true" class="w-full" />
+                        <label for="decision" class="block font-bold mb-2">Associated Decision</label>
+                        <p-dropdown [options]="decisions" [(ngModel)]="task.decision" 
+                                  optionLabel="content" placeholder="Select decision"
+                                  styleClass="w-full" />
                     </div>
                 </div>
-            </ng-template>
+                <ng-template pTemplate="footer">
+                    <div class="flex justify-end gap-2">
+                        <p-button label="Cancel" icon="pi pi-times" (onClick)="hideTaskDialog()" />
+                        <p-button label="Save" icon="pi pi-check" (onClick)="saveTask()" />
+                    </div>
+                </ng-template>
+            </p-dialog>
 
-            <ng-template #footer>
-                <div class="flex justify-end gap-2">
-                    <p-button label="Cancel" icon="pi pi-times" text (click)="hideDialog()" />
-                    <p-button label="Save" icon="pi pi-check" (click)="saveMeeting()" />
-                </div>
-            </ng-template>
-        </p-dialog>
+            <!-- Meeting Edit Dialog -->
+            <p-dialog [(visible)]="meetingDialog" [style]="{ width: '600px' }" header="Edit Meeting" [modal]="true" 
+                      [draggable]="false" [resizable]="false" styleClass="p-fluid">
+                <ng-template #content>
+                    <div class="flex flex-col gap-6">
+                        <div class="field">
+                            <label for="title" class="block font-bold mb-2">Title</label>
+                            <input type="text" pInputText fluid id="title" [(ngModel)]="editingMeeting.title" required autofocus />
+                            <small class="text-red-500" *ngIf="submitted && !editingMeeting.title">Title is required.</small>
+                        </div>
 
-        <p-toast></p-toast>
-        <p-confirmdialog [style]="{ width: '450px' }" />
-    `,
+                        <div class="field">
+                            <label for="agenda" class="block font-bold mb-2">Agenda</label>
+                            <textarea pTextarea fluid id="agenda" [(ngModel)]="editingMeeting.agenda" required rows="3" 
+                                      placeholder="Enter meeting agenda..."></textarea>
+                        </div>
+
+                        <div class="field">
+                            <label for="objectives" class="block font-bold mb-2">Objectives</label>
+                            <textarea pTextarea fluid id="objectives" [(ngModel)]="editingMeeting.objectives" required rows="3" 
+                                      placeholder="Enter meeting objectives..."></textarea>
+                        </div>
+                        <div class="field">
+                            <label for="participants" class="block font-bold mb-2">Participants</label>
+                            <p-multiSelect [options]="userList" [(ngModel)]="editingMeeting.participants" 
+                                         optionLabel="fullName" placeholder="Select Participants" 
+                                         display="chip" class="w-full"
+                                         [scrollHeight]="'200px'"
+                                         [panelStyle]="{'min-width': '100%'}"
+                                         [style]="{'width': '100%'}"
+                                         [virtualScroll]="true"
+                                         [virtualScrollItemSize]="34"
+                                         appendTo="body">
+                                <ng-template let-user pTemplate="item">
+                                    <div class="flex align-items-center">
+                                        <div>{{user.fullName}}</div>
+                                    </div>
+                                </ng-template>
+                                <ng-template let-user pTemplate="selectedItem">
+                                    <div class="flex align-items-center">
+                                        <div>{{user.fullName}}</div>
+                                    </div>
+                                </ng-template>
+                            </p-multiSelect>
+                        </div>
+                        <div class="field">
+                            <label for="dateTime" class="block font-bold mb-2">Date & Time</label>
+                            <p-calendar fluid [(ngModel)]="editingMeeting.dateTime" [showTime]="true" hourFormat="24" 
+                                       dateFormat="yy-mm-dd" [showIcon]="true" class="w-full" />
+                        </div>
+                    </div>
+                </ng-template>
+
+                <ng-template #footer>
+                    <div class="flex justify-end gap-2">
+                        <p-button label="Cancel" icon="pi pi-times" text (click)="hideDialog()" />
+                        <p-button label="Save" icon="pi pi-check" (click)="saveMeeting()" />
+                    </div>
+                </ng-template>
+            </p-dialog>
+
+            <p-toast></p-toast>
+            <p-confirmdialog [style]="{ width: '450px' }" />
+        `,
     providers: [MessageService, MeetingsService, DecisionsService, TasksService, UsersService, DocumentsService, ConfirmationService]
 })
 export class MeetingDetailsComponent implements OnInit {
@@ -448,6 +476,14 @@ export class MeetingDetailsComponent implements OnInit {
             next: (decisions) => {
                 console.log('Decisions received:', decisions);
                 this.decisions = decisions;
+                // Extract tasks from all decisions
+                this.tasks = decisions.flatMap(decision => 
+                    decision.tasks.map(task => ({
+                        ...task,
+                        decision: decision // Keep reference to parent decision
+                    }))
+                );
+                console.log('Extracted tasks:', this.tasks);
             },
             error: (error) => {
                 console.error('Error loading decisions:', error);
@@ -738,19 +774,15 @@ export class MeetingDetailsComponent implements OnInit {
             id: 0,
             description: '',
             status: 'PENDING',
-            decision: {} as Decision,
             assignedTo: {} as User,
-            deadline: new Date().toISOString()
+            deadline: new Date().toISOString(),
+            decision: {} as Decision
         };
         this.taskDialog = true;
     }
 
     editTask(task: Task) {
         this.task = { ...task };
-        // Ensure deadline is properly formatted
-        if (this.task.deadline) {
-            this.task.deadline = new Date(this.task.deadline) as any;
-        }
         this.taskDialog = true;
     }
 
@@ -762,9 +794,9 @@ export class MeetingDetailsComponent implements OnInit {
         if (this.task.id) {
             this.tasksService.update(this.task.id, this.task).subscribe({
                 next: (updatedTask) => {
-                    const index = this.tasks.findIndex((t) => t.id === updatedTask.id);
+                    const index = this.tasks.findIndex(t => t.id === updatedTask.id);
                     if (index !== -1) {
-                        this.tasks[index] = updatedTask;
+                        this.tasks[index] = { ...updatedTask, decision: this.task.decision };
                     }
                     this.messageService.add({
                         severity: 'success',
@@ -776,14 +808,14 @@ export class MeetingDetailsComponent implements OnInit {
                     this.messageService.add({
                         severity: 'error',
                         summary: 'Error',
-                        detail: 'Failed to update task'
+                        detail: 'Failed to update task: ' + (error.error?.message || 'Unknown error')
                     });
                 }
             });
         } else {
             this.tasksService.create(this.task).subscribe({
                 next: (newTask) => {
-                    this.tasks.push(newTask);
+                    this.tasks.push({ ...newTask, decision: this.task.decision });
                     this.messageService.add({
                         severity: 'success',
                         summary: 'Success',
@@ -794,7 +826,7 @@ export class MeetingDetailsComponent implements OnInit {
                     this.messageService.add({
                         severity: 'error',
                         summary: 'Error',
-                        detail: 'Failed to create task'
+                        detail: 'Failed to create task: ' + (error.error?.message || 'Unknown error')
                     });
                 }
             });
@@ -803,14 +835,9 @@ export class MeetingDetailsComponent implements OnInit {
     }
 
     deleteTask(task: Task) {
-        this.confirmationService.confirm({
-            message: `Are you sure you want to delete this task?`,
-            header: 'Confirm Delete',
-            icon: 'pi pi-exclamation-triangle',
-            accept: () => {
         this.tasksService.delete(task.id).subscribe({
             next: () => {
-                        this.tasks = this.tasks.filter((t) => t.id !== task.id);
+                this.tasks = this.tasks.filter(t => t.id !== task.id);
                 this.messageService.add({
                     severity: 'success',
                     summary: 'Success',
@@ -821,9 +848,7 @@ export class MeetingDetailsComponent implements OnInit {
                 this.messageService.add({
                     severity: 'error',
                     summary: 'Error',
-                    detail: 'Failed to delete task'
-                        });
-                    }
+                    detail: 'Failed to delete task: ' + (error.error?.message || 'Unknown error')
                 });
             }
         });

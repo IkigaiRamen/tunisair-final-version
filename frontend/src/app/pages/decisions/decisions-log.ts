@@ -153,6 +153,8 @@ import { AuthService } from '../../core/services/auth.service';
                 </div>
             </ng-template>
         </p-dialog>
+
+        <p-toast position="top-right" [baseZIndex]="5000"></p-toast>
     `,
     providers: [MessageService, DecisionsService, TasksService, UsersService]
 })
@@ -172,7 +174,7 @@ export class DecisionsLogComponent implements OnInit {
         private authService: AuthService
     ) {}
 
-        ngOnInit() {
+    ngOnInit() {
         this.authService.me().subscribe({
             next: (user: User) => {
                 this.userRole = user.roles[0].name;
@@ -194,13 +196,20 @@ export class DecisionsLogComponent implements OnInit {
                     console.log(`Decision ID: ${decision.id}, Content: ${decision.content}, Tasks:`, decision.tasks);
                 });
                 this.decisions = decisions;
+                this.messageService.add({
+                    severity: 'success',
+                    summary: 'Success',
+                    detail: `Loaded ${decisions.length} decisions`,
+                    life: 3000
+                });
             },
             error: (error) => {
                 console.error('Error loading decisions:', error);
                 this.messageService.add({
                     severity: 'error',
                     summary: 'Error',
-                    detail: 'Failed to load decisions'
+                    detail: 'Failed to load decisions: ' + (error.error?.message || 'Unknown error'),
+                    life: 5000
                 });
             }
         });
@@ -210,12 +219,19 @@ export class DecisionsLogComponent implements OnInit {
         this.usersService.getAll().subscribe({
             next: (users) => {
                 this.userList = users;
+                this.messageService.add({
+                    severity: 'success',
+                    summary: 'Success',
+                    detail: `Loaded ${users.length} users`,
+                    life: 3000
+                });
             },
             error: (error) => {
                 this.messageService.add({
                     severity: 'error',
                     summary: 'Error',
-                    detail: 'Failed to load users'
+                    detail: 'Failed to load users: ' + (error.error?.message || 'Unknown error'),
+                    life: 5000
                 });
             }
         });
@@ -236,15 +252,33 @@ export class DecisionsLogComponent implements OnInit {
             tasks: []
         };
         this.decisionDialog = true;
+        this.messageService.add({
+            severity: 'info',
+            summary: 'New Decision',
+            detail: 'Creating a new decision',
+            life: 3000
+        });
     }
 
     editDecision(decision: Decision) {
         this.decision = { ...decision };
         this.decisionDialog = true;
+        this.messageService.add({
+            severity: 'info',
+            summary: 'Edit Decision',
+            detail: `Editing decision: ${decision.content.substring(0, 30)}${decision.content.length > 30 ? '...' : ''}`,
+            life: 3000
+        });
     }
 
     hideDialog() {
         this.decisionDialog = false;
+        this.messageService.add({
+            severity: 'info',
+            summary: 'Cancelled',
+            detail: 'Operation cancelled',
+            life: 3000
+        });
     }
 
     saveDecision() {
@@ -258,14 +292,16 @@ export class DecisionsLogComponent implements OnInit {
                     this.messageService.add({
                         severity: 'success',
                         summary: 'Success',
-                        detail: 'Decision updated successfully'
+                        detail: 'Decision updated successfully',
+                        life: 3000
                     });
                 },
                 error: (error) => {
                     this.messageService.add({
                         severity: 'error',
                         summary: 'Error',
-                        detail: 'Failed to update decision'
+                        detail: 'Failed to update decision: ' + (error.error?.message || 'Unknown error'),
+                        life: 5000
                     });
                 }
             });
@@ -276,14 +312,16 @@ export class DecisionsLogComponent implements OnInit {
                     this.messageService.add({
                         severity: 'success',
                         summary: 'Success',
-                        detail: 'Decision created successfully'
+                        detail: 'Decision created successfully',
+                        life: 3000
                     });
                 },
                 error: (error) => {
                     this.messageService.add({
                         severity: 'error',
                         summary: 'Error',
-                        detail: 'Failed to create decision'
+                        detail: 'Failed to create decision: ' + (error.error?.message || 'Unknown error'),
+                        life: 5000
                     });
                 }
             });
@@ -292,20 +330,29 @@ export class DecisionsLogComponent implements OnInit {
     }
 
     deleteDecision(decision: Decision) {
+        this.messageService.add({
+            severity: 'warn',
+            summary: 'Confirm Delete',
+            detail: `Are you sure you want to delete this decision?`,
+            life: 5000
+        });
+        
         this.decisionsService.delete(decision.id).subscribe({
             next: () => {
                 this.decisions = this.decisions.filter(d => d.id !== decision.id);
                 this.messageService.add({
                     severity: 'success',
                     summary: 'Success',
-                    detail: 'Decision deleted successfully'
+                    detail: 'Decision deleted successfully',
+                    life: 3000
                 });
             },
             error: (error) => {
                 this.messageService.add({
                     severity: 'error',
                     summary: 'Error',
-                    detail: 'Failed to delete decision'
+                    detail: 'Failed to delete decision: ' + (error.error?.message || 'Unknown error'),
+                    life: 5000
                 });
             }
         });

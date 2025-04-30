@@ -89,7 +89,7 @@ public class DecisionController {
         @ApiResponse(responseCode = "403", description = "Access denied")
     })
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SECRETARY')")
     public ResponseEntity<Void> deleteDecision(@PathVariable Long id) {
         decisionService.deleteDecision(id);
         return ResponseEntity.ok().build();

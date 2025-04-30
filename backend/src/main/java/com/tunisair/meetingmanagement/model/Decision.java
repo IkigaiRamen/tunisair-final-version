@@ -47,5 +47,6 @@ public class Decision {
     private LocalDateTime updatedAt;
 
     @OneToMany(mappedBy = "decision", cascade = CascadeType.ALL, orphanRemoval = true)
+    @lombok.EqualsAndHashCode.Exclude
     private Set<Task> tasks = new HashSet<>();
 }

@@ -28,8 +28,8 @@ public class Task {
     @JsonBackReference
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "decision_id")
+    @lombok.EqualsAndHashCode.Exclude
     private Decision decision;
-
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "assigned_to_id")
@@ -54,4 +54,4 @@ public class Task {
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
     }
-} 
+}

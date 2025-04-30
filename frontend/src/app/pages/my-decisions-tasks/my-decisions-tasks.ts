@@ -33,7 +33,8 @@ import { RouterModule } from '@angular/router';
         ToastModule,
         CalendarModule,
         RouterModule,
-        DropdownModule
+        DropdownModule,
+        ToastModule
     ],
     template: `
         <div class="grid grid-cols-1 gap-8">
@@ -226,6 +227,8 @@ export class MyDecisionsTasksComponent implements OnInit {
                         d.responsibleUser?.id === currentUser.id
                     );
                     this.filteredDecisions = [...this.decisions];
+                    this.tasks = this.decisions.map(d => d.tasks).flat();
+                    this.filteredTasks = [...this.tasks]; 
                 },
                 error: (error) => {
                     this.messageService.add({
@@ -236,22 +239,7 @@ export class MyDecisionsTasksComponent implements OnInit {
                 }
             });
 
-            // Load user's tasks
-            this.tasksService.list().subscribe({
-                next: (tasks) => {
-                    this.tasks = tasks.filter(t => 
-                        t.assignedTo?.id === currentUser.id
-                    );
-                    this.filteredTasks = [...this.tasks];
-                },
-                error: (error) => {
-                    this.messageService.add({
-                        severity: 'error',
-                        summary: 'Error',
-                        detail: 'Failed to load tasks'
-                    });
-                }
-            });
+        
         }
     }
 
