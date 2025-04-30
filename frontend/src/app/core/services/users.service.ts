@@ -2,11 +2,12 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { ApiService } from './api.service';
 import { User } from '../models/user.model';
-import { catchError } from 'rxjs/operators';
+import { catchError, tap } from 'rxjs/operators';
+import { AuthService } from './auth.service';
 
 @Injectable({ providedIn: 'root' })
 export class UsersService {
-  constructor(private api: ApiService) {}
+  constructor(private api: ApiService, private authService: AuthService) {}
 
   getAll(): Observable<User[]> {
     return this.api.get<User[]>('/users');
@@ -32,6 +33,20 @@ export class UsersService {
         catchError(error => {
             console.error('Error updating user:', error);
             throw error;
+        })
+    );
+  }
+
+  updateProfilePicture(id: number, file: File): Observable<User> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.api.put<User>(`/users/${id}/profile-picture`, formData).pipe(
+        tap(user => {
+            // Update the user in the auth service if it's the current user
+            const currentUser = this.authService.getUser();
+            if (currentUser && currentUser.id === id) {
+                this.authService.setUser(user);
+            }
         })
     );
   }

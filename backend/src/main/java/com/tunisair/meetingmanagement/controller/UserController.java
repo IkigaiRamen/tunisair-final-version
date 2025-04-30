@@ -3,13 +3,18 @@ package com.tunisair.meetingmanagement.controller;
 import com.tunisair.meetingmanagement.model.Role;
 import com.tunisair.meetingmanagement.model.User;
 import com.tunisair.meetingmanagement.service.UserService;
+import com.tunisair.meetingmanagement.service.FileStorageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 
 import jakarta.validation.Valid;
+import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -21,6 +26,7 @@ import java.util.Set;
 public class UserController {
 
     private final UserService userService;
+    private final FileStorageService fileStorageService;
 
     @GetMapping
     @PreAuthorize("hasRole('ADMIN') or hasRole('SECRETARY')")
@@ -68,6 +74,34 @@ public class UserController {
         return ResponseEntity.ok(userService.updateUser(id, userDetails));
     }
 
+    @PutMapping(value = "/{id}/profile-picture", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<User> updateProfilePicture(
+            @PathVariable Long id,
+            @RequestParam("file") MultipartFile file) {
+        try {
+            // Get the current user's email from the authentication context
+            String currentUserEmail = SecurityContextHolder.getContext().getAuthentication().getName();
+
+            // Get the user being updated
+            User userToUpdate = userService.getUserById(id)
+                    .orElseThrow(() -> new RuntimeException("User not found with id: " + id));
+
+            // Check if the current user is trying to update their own profile
+            if (!userToUpdate.getEmail().equals(currentUserEmail)) {
+                throw new RuntimeException("You can only update your own profile picture");
+            }
+
+            // Save the file and get the URL
+            String profilePictureUrl = fileStorageService.saveProfilePicture(file, id);
+
+            // Update the user with the new profile picture URL
+            return ResponseEntity.ok(userService.updateProfilePicture(id, profilePictureUrl));
+        } catch (IOException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
@@ -79,5 +113,10 @@ public class UserController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Set<User>> getUsersByRole(@PathVariable Role.RoleName roleName) {
         return ResponseEntity.ok(userService.getUsersByRole(roleName));
+    }
+
+    @GetMapping("/test-static")
+    public ResponseEntity<String> testStaticResources() {
+        return ResponseEntity.ok("Static resources should be accessible at /profile-pictures/");
     }
 }

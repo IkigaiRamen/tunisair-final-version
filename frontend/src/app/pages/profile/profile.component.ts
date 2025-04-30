@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
@@ -13,6 +13,20 @@ import { AuthService } from '../../core/services/auth.service';
 import { UsersService } from '../../core/services/users.service';
 import { User } from '../../core/models/user.model';
 import { Router } from '@angular/router';
+import { FileUploadModule } from 'primeng/fileupload';
+import { environment } from '../../../environments/environment';
+import { MeetingsService } from '../../core/services/meetings.service';
+import { DocumentsService } from '../../core/services/documents.service';
+import { TasksService } from '../../core/services/tasks.service';
+
+interface ActivityStats {
+    meetingsAttended: number;
+    lastMeetingDate: string;
+    documentsUploaded: number;
+    lastDocumentDate: string;
+    tasksCompleted: number;
+    lastTaskDate: string;
+}
 
 @Component({
     selector: 'app-profile',
@@ -26,7 +40,8 @@ import { Router } from '@angular/router';
         PasswordModule,
         ToastModule,
         TabViewModule,
-        DividerModule
+        DividerModule,
+        FileUploadModule
     ],
     providers: [MessageService],
     template: `
@@ -36,9 +51,27 @@ import { Router } from '@angular/router';
             <!-- Profile Header -->
             <p-card styleClass="shadow-2 border-round-xl mb-5">
                 <div class="flex flex-column md:flex-row align-items-center gap-4">
-                    <div class="flex align-items-center justify-content-center bg-primary border-circle shadow-2" 
-                         style="width: 120px; height: 120px; border: 4px solid var(--surface-card);">
-                        <i class="pi pi-user text-5xl text-white"></i>
+                    <div class="profile-picture-container">
+                        <div class="profile-picture">
+                            <img *ngIf="user?.profilePicture" 
+                                 [src]="getImageUrl()" 
+                                 alt="Profile Picture" 
+                                 class="profile-img"
+                                 (error)="handleImageError($event)">
+                            <i class="pi pi-user text-5xl text-white" *ngIf="!user?.profilePicture"></i>
+                        </div>
+                        <p-fileUpload #fileUpload 
+                            mode="basic" 
+                            [auto]="true" 
+                            accept="image/*" 
+                            [maxFileSize]="5000000" 
+                            (onSelect)="onFileSelect($event)" 
+                            [customUpload]="true" 
+                            chooseLabel="Edit Picture"
+                            [showCancelButton]="false"
+                            [showUploadButton]="false"
+                            styleClass="p-button-secondary">
+                        </p-fileUpload>
                     </div>
                     <div class="flex-1">
                         <h2 class="text-3xl font-bold m-0 mb-2">{{user?.fullName}}</h2>
@@ -61,73 +94,87 @@ import { Router } from '@angular/router';
             <!-- Edit Profile Form -->
             <div *ngIf="isEditMode" class="surface-card p-5 border-round-xl shadow-2 mb-5">
                 <form [formGroup]="profileForm" (ngSubmit)="onSubmit()" class="flex flex-column gap-5">
-                    <!-- Personal Info Section -->
-                    <div class="flex flex-column gap-4">
-                        <div class="flex align-items-center gap-3">
-                            <i class="pi pi-user text-primary text-2xl"></i>
-                            <h3 class="text-2xl font-medium m-0">Personal Information</h3>
-                        </div>
-                        
-                        <div class="grid">
-                            <div class="col-12 md:col-6">
-                                <div class="field">
-                                    <label for="fullName" class="block text-900 font-medium mb-2">Full Name</label>
-                                    <input id="fullName" type="text" pInputText formControlName="fullName" 
-                                           class="w-full" />
-                                    <small class="text-red-500 block mt-2" *ngIf="profileForm.get('fullName')?.invalid && profileForm.get('fullName')?.touched">
-                                        Full name is required
-                                    </small>
-                                </div>
+                    <p-card header="Edit Profile" styleClass="shadow-none">
+                        <ng-template pTemplate="header">
+                            <div class="flex align-items-center gap-2">
+                                <i class="pi pi-user-edit text-primary text-2xl"></i>
+                                <span class="text-2xl font-medium">Edit Profile</span>
                             </div>
-                            <div class="col-12 md:col-6">
-                                <div class="field">
-                                    <label for="email" class="block text-900 font-medium mb-2">Email</label>
-                                    <input id="email" type="email" pInputText formControlName="email" 
-                                           class="w-full" />
-                                    <small class="text-red-500 block mt-2" *ngIf="profileForm.get('email')?.invalid && profileForm.get('email')?.touched">
-                                        Please enter a valid email
-                                    </small>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                        </ng-template>
 
-                    <!-- Password Section -->
-                    <div class="flex flex-column gap-4">
-                        <div class="flex align-items-center gap-3">
-                            <i class="pi pi-lock text-primary text-2xl"></i>
-                            <h3 class="text-2xl font-medium m-0">Change Password</h3>
-                        </div>
                         <div class="grid">
-                            <div class="col-12 md:col-6">
-                                <div class="field">
-                                    <label for="currentPassword" class="block text-900 font-medium mb-2">Current Password</label>
-                                    <p-password id="currentPassword" formControlName="currentPassword" [toggleMask]="true" 
-                                              [feedback]="false" styleClass="w-full"></p-password>
-                                    <small class="text-red-500 block mt-2" *ngIf="profileForm.get('currentPassword')?.invalid && profileForm.get('currentPassword')?.touched">
-                                        Current password is required
-                                    </small>
-                                </div>
+                            <!-- Personal Information -->
+                            <div class="col-12">
+                                <p-card header="Personal Information" styleClass="shadow-none">
+                                    <div class="grid">
+                                        <div class="col-12 md:col-6">
+                                            <div class="field">
+                                                <label for="fullName" class="block text-900 font-medium mb-2">Full Name</label>
+                                                <input pInputText id="fullName" formControlName="fullName" 
+                                                       class="w-full" [style]="{'width': '100%'}"
+                                                       placeholder="Enter your full name">
+                                                <small class="text-red-500 block mt-2" *ngIf="profileForm.get('fullName')?.invalid && profileForm.get('fullName')?.touched">
+                                                    Full name is required
+                                                </small>
+                                            </div>
+                                        </div>
+                                        <div class="col-12 md:col-6">
+                                            <div class="field">
+                                                <label for="email" class="block text-900 font-medium mb-2">Email</label>
+                                                <input pInputText id="email" type="email" formControlName="email" 
+                                                       class="w-full" [style]="{'width': '100%'}"
+                                                       placeholder="Enter your email">
+                                                <small class="text-red-500 block mt-2" *ngIf="profileForm.get('email')?.invalid && profileForm.get('email')?.touched">
+                                                    Please enter a valid email
+                                                </small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </p-card>
                             </div>
-                            <div class="col-12 md:col-6">
-                                <div class="field">
-                                    <label for="newPassword" class="block text-900 font-medium mb-2">New Password</label>
-                                    <p-password id="newPassword" formControlName="newPassword" [toggleMask]="true" 
-                                              [feedback]="false" styleClass="w-full"></p-password>
-                                    <small class="text-red-500 block mt-2" *ngIf="profileForm.get('newPassword')?.invalid && profileForm.get('newPassword')?.touched">
-                                        New password must be at least 6 characters
-                                    </small>
-                                </div>
+
+                            <!-- Change Password -->
+                            <div class="col-12 mt-4">
+                                <p-card header="Change Password" styleClass="shadow-none">
+                                    <div class="grid">
+                                        <div class="col-12 md:col-6">
+                                            <div class="field">
+                                                <label for="currentPassword" class="block text-900 font-medium mb-2">Current Password</label>
+                                                <p-password id="currentPassword" formControlName="currentPassword" 
+                                                          [toggleMask]="true" [feedback]="false" 
+                                                          [style]="{'width': '100%'}"
+                                                          placeholder="Enter current password"></p-password>
+                                                <small class="text-red-500 block mt-2" *ngIf="profileForm.get('currentPassword')?.invalid && profileForm.get('currentPassword')?.touched">
+                                                    Current password is required
+                                                </small>
+                                            </div>
+                                        </div>
+                                        <div class="col-12 md:col-6">
+                                            <div class="field">
+                                                <label for="newPassword" class="block text-900 font-medium mb-2">New Password</label>
+                                                <p-password id="newPassword" formControlName="newPassword" 
+                                                          [toggleMask]="true" [feedback]="false"
+                                                          [style]="{'width': '100%'}"
+                                                          placeholder="Enter new password"></p-password>
+                                                <small class="text-red-500 block mt-2" *ngIf="profileForm.get('newPassword')?.invalid && profileForm.get('newPassword')?.touched">
+                                                    New password must be at least 6 characters
+                                                </small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </p-card>
                             </div>
                         </div>
-                    </div>
 
-                    <div class="flex justify-content-end gap-3 mt-5">
-                        <p-button type="button" label="Cancel" (onClick)="toggleEditMode()" 
-                                 styleClass="p-button-outlined"></p-button>
-                        <p-button type="submit" label="Save Changes" [loading]="loading" 
-                                 styleClass="p-button-primary"></p-button>
-                    </div>
+                        <ng-template pTemplate="footer">
+                            <div class="flex justify-content-end gap-3">
+                                <p-button type="button" label="Cancel" icon="pi pi-times" 
+                                         (onClick)="toggleEditMode()" styleClass="p-button-outlined"></p-button>
+                                <p-button type="submit" label="Save Changes" icon="pi pi-check" 
+                                         [loading]="loading" styleClass="p-button-primary"></p-button>
+                            </div>
+                        </ng-template>
+                    </p-card>
                 </form>
             </div>
 
@@ -143,9 +190,11 @@ import { Router } from '@angular/router';
                             <i class="pi pi-calendar text-primary text-4xl"></i>
                         </div>
                         <div class="activity-content">
-                            <div class="activity-number">5</div>
+                            <div class="activity-number">{{activityStats.meetingsAttended}}</div>
                             <div class="activity-title">Meetings Attended</div>
-                            <div class="activity-subtitle">Last meeting: 2 days ago</div>
+                            <div class="activity-subtitle" *ngIf="activityStats.lastMeetingDate">
+                                Last meeting: {{activityStats.lastMeetingDate}}
+                            </div>
                         </div>
                     </div>
                     <div class="activity-card">
@@ -153,9 +202,11 @@ import { Router } from '@angular/router';
                             <i class="pi pi-file text-primary text-4xl"></i>
                         </div>
                         <div class="activity-content">
-                            <div class="activity-number">3</div>
+                            <div class="activity-number">{{activityStats.documentsUploaded}}</div>
                             <div class="activity-title">Documents Uploaded</div>
-                            <div class="activity-subtitle">Last upload: 1 week ago</div>
+                            <div class="activity-subtitle" *ngIf="activityStats.lastDocumentDate">
+                                Last upload: {{activityStats.lastDocumentDate}}
+                            </div>
                         </div>
                     </div>
                     <div class="activity-card">
@@ -163,9 +214,11 @@ import { Router } from '@angular/router';
                             <i class="pi pi-check-circle text-primary text-4xl"></i>
                         </div>
                         <div class="activity-content">
-                            <div class="activity-number">8</div>
+                            <div class="activity-number">{{activityStats.tasksCompleted}}</div>
                             <div class="activity-title">Tasks Completed</div>
-                            <div class="activity-subtitle">Last task: 3 days ago</div>
+                            <div class="activity-subtitle" *ngIf="activityStats.lastTaskDate">
+                                Last task: {{activityStats.lastTaskDate}}
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -263,6 +316,74 @@ import { Router } from '@angular/router';
             font-size: 0.875rem;
             color: var(--text-color-secondary);
         }
+        .profile-picture-container {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            align-items: center;
+        }
+        .profile-picture {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background-color: var(--primary-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 4px solid var(--surface-card);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .profile-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 50%;
+        }
+        .profile-picture-upload {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            background-color: var(--surface-card);
+            border-radius: 50%;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            cursor: pointer;
+            z-index: 10;
+            transition: all 0.2s ease;
+        }
+        .profile-picture-upload:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        }
+        .profile-picture-upload ::ng-deep .p-fileupload-buttonbar {
+            padding: 0;
+            background: transparent;
+            border: none;
+        }
+        .profile-picture-upload ::ng-deep .p-button {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+            color: white;
+        }
+        .profile-picture-upload ::ng-deep .p-button:hover {
+            background-color: var(--primary-600);
+            border-color: var(--primary-600);
+        }
+        .profile-picture-upload ::ng-deep .p-button .p-button-icon {
+            font-size: 1rem;
+        }
         :host ::ng-deep {
             .p-card {
                 .p-card-content {
@@ -296,6 +417,23 @@ import { Router } from '@angular/router';
                 }
             }
         }
+        .debug-url {
+            position: absolute;
+            top: 0;
+            left: 0;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 5px;
+            font-size: 10px;
+            z-index: 100;
+            max-width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .hidden {
+            display: none;
+        }
     `]
 })
 export class ProfileComponent implements OnInit {
@@ -303,18 +441,38 @@ export class ProfileComponent implements OnInit {
     user: User | null = null;
     loading = false;
     isEditMode = false;
+    selectedFile: File | null = null;
+    @ViewChild('fileUpload') fileUpload!: ElementRef;
+    activityStats: ActivityStats = {
+        meetingsAttended: 0,
+        lastMeetingDate: '',
+        documentsUploaded: 0,
+        lastDocumentDate: '',
+        tasksCompleted: 0,
+        lastTaskDate: ''
+    };
 
     constructor(
         private fb: FormBuilder,
         private authService: AuthService,
         private usersService: UsersService,
         private messageService: MessageService,
-        private router: Router
+        private router: Router,
+        private meetingsService: MeetingsService,
+        private documentsService: DocumentsService,
+        private tasksService: TasksService
     ) {}
 
     ngOnInit(): void {
         this.user = this.authService.getUser();
         this.initForm();
+        
+        console.log('User object:', this.user);
+        if (this.user?.profilePicture) {
+            console.log('Profile picture URL:', this.user.profilePicture);
+            console.log('Full image URL:', this.getImageUrl());
+        }
+        this.loadActivityStats();
     }
 
     private initForm(): void {
@@ -398,8 +556,148 @@ export class ProfileComponent implements OnInit {
         }
     }
 
+    onFileSelect(event: any): void {
+        if (event.files && event.files.length > 0) {
+            this.selectedFile = event.files[0];
+            
+            // Validate file type
+            if (this.selectedFile && !this.selectedFile.type.startsWith('image/')) {
+                this.messageService.add({
+                    severity: 'error',
+                    summary: 'Error',
+                    detail: 'Please select an image file'
+                });
+                return;
+            }
+            
+            // Validate file size (max 5MB)
+            if (this.selectedFile && this.selectedFile.size > 5 * 1024 * 1024) {
+                this.messageService.add({
+                    severity: 'error',
+                    summary: 'Error',
+                    detail: 'File size should be less than 5MB'
+                });
+                return;
+            }
+            
+            // Auto upload the file
+            this.uploadProfilePicture();
+        }
+    }
+
+    uploadProfilePicture(): void {
+        if (!this.selectedFile || !this.user) return;
+        
+        this.loading = true;
+        
+        this.usersService.updateProfilePicture(this.user.id, this.selectedFile).subscribe({
+            next: (updatedUser) => {
+                this.user = updatedUser;
+                this.messageService.add({
+                    severity: 'success',
+                    summary: 'Success',
+                    detail: 'Profile picture updated successfully'
+                });
+                this.loading = false;
+            },
+            error: (error) => {
+                console.error('Error updating profile picture:', error);
+                this.messageService.add({
+                    severity: 'error',
+                    summary: 'Error',
+                    detail: 'Failed to update profile picture'
+                });
+                this.loading = false;
+            }
+        });
+    }
+
     logout(): void {
         this.authService.logout();
         this.router.navigate(['/auth/login']);
+    }
+
+    getImageUrl(): string {
+        if (!this.user?.profilePicture) {
+            return '';
+        }
+        
+        // Check if the URL is already absolute
+        if (this.user.profilePicture.startsWith('http')) {
+            return this.user.profilePicture;
+        }
+        
+        // Otherwise, prepend the API URL
+        return `${environment.apiUrl}${this.user.profilePicture}`;
+    }
+    
+    handleImageError(event: any): void {
+        console.error('Error loading image:', event);
+        this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'Failed to load profile picture'
+        });
+    }
+
+    triggerFileInput(): void {
+        const fileInput = this.fileUpload.nativeElement.querySelector('input[type="file"]');
+        if (fileInput) {
+            fileInput.click();
+        }
+    }
+
+    private loadActivityStats(): void {
+        if (!this.user) return;
+
+        // Load meetings attended
+        const start = new Date().toISOString();
+        this.meetingsService.getPastMeetings(start).subscribe((meetings: any[]) => {
+            // Filter meetings where the current user is a participant
+            const userMeetings = meetings.filter(meeting => 
+                meeting.participants.some((participant: User) => participant.id === this.user?.id)
+            );
+            this.activityStats.meetingsAttended = userMeetings.length;
+            if (userMeetings.length > 0) {
+                const lastMeeting = userMeetings.sort((a: any, b: any) => 
+                    new Date(b.dateTime).getTime() - new Date(a.dateTime).getTime())[0];
+                this.activityStats.lastMeetingDate = this.formatDate(lastMeeting.dateTime);
+            }
+        });
+
+        // Load documents uploaded
+        this.documentsService.list().subscribe((documents: any[]) => {
+            const userDocuments = documents.filter((doc: any) => doc.uploadedBy.id === this.user?.id);
+            this.activityStats.documentsUploaded = userDocuments.length;
+            if (userDocuments.length > 0) {
+                const lastDocument = userDocuments.sort((a: any, b: any) => 
+                    new Date(b.uploadDate).getTime() - new Date(a.uploadDate).getTime())[0];
+                this.activityStats.lastDocumentDate = this.formatDate(lastDocument.uploadDate);
+            }
+        });
+
+        // Load tasks completed
+        this.tasksService.list().subscribe((tasks: any[]) => {
+            const userTasks = tasks.filter((task: any) => task.assignedTo.id === this.user?.id);
+            const completedTasks = userTasks.filter((t: any) => t.status === 'COMPLETED');
+            this.activityStats.tasksCompleted = completedTasks.length;
+            if (completedTasks.length > 0) {
+                const lastTask = completedTasks.sort((a: any, b: any) => 
+                    new Date(b.completionDate).getTime() - new Date(a.completionDate).getTime())[0];
+                this.activityStats.lastTaskDate = this.formatDate(lastTask.completionDate);
+            }
+        });
+    }
+
+    private formatDate(date: string): string {
+        const now = new Date();
+        const taskDate = new Date(date);
+        const diffDays = Math.floor((now.getTime() - taskDate.getTime()) / (1000 * 60 * 60 * 24));
+        
+        if (diffDays === 0) return 'today';
+        if (diffDays === 1) return 'yesterday';
+        if (diffDays < 7) return `${diffDays} days ago`;
+        if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
+        return `${Math.floor(diffDays / 30)} months ago`;
     }
 } 

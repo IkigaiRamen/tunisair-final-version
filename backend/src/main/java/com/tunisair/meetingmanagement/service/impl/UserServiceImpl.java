@@ -83,4 +83,13 @@ public class UserServiceImpl implements UserService {
     public boolean existsByEmail(String email) {
         return userRepository.existsByEmail(email);
     }
+
+    @Override
+    @Transactional
+    public User updateProfilePicture(Long id, String profilePicture) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + id));
+        user.setProfilePicture(profilePicture);
+        return userRepository.save(user);
+    }
 }

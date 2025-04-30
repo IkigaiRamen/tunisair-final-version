@@ -7,4 +7,5 @@ export interface User {
   password?: string;
   roles: Role[];
   enabled: boolean;
+  profilePicture?: string;
 } 

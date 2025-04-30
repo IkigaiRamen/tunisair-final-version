@@ -77,16 +77,31 @@ export class Login implements OnInit {
         this.authService.login(this.loginForm.value).subscribe({
             next: (res) => {
                 this.authService.setToken(res.token);
-                const user = {
-                    id: res.id,
-                    fullName: res.fullName,
-                    email: res.email,
-                    roles: res.roles.map((roleName) => ({ id: 0, name: roleName as RoleName })),
-                    enabled: true
-                };
-                this.authService.setUser(user);
-                this.messageService.add({ severity: 'success', summary: 'Login Successful', detail: 'Welcome back!' });
-                this.router.navigate(['/meetings/upcoming']);
+                
+                // Fetch the complete user data including profile picture
+                this.authService.me().subscribe({
+                    next: (user) => {
+                        this.authService.setUser(user);
+                        this.messageService.add({ severity: 'success', summary: 'Login Successful', detail: 'Welcome back!' });
+                        this.router.navigate(['/meetings/upcoming']);
+                        this.loading = false;
+                    },
+                    error: (err) => {
+                        console.error('Error fetching user data:', err);
+                        // Fallback to basic user data if fetching complete data fails
+                        const basicUser = {
+                            id: res.id,
+                            fullName: res.fullName,
+                            email: res.email,
+                            roles: res.roles.map((roleName) => ({ id: 0, name: roleName as RoleName })),
+                            enabled: true
+                        };
+                        this.authService.setUser(basicUser);
+                        this.messageService.add({ severity: 'success', summary: 'Login Successful', detail: 'Welcome back!' });
+                        this.router.navigate(['/meetings/upcoming']);
+                        this.loading = false;
+                    }
+                });
             },
             error: (err) => {
                 this.messageService.add({ severity: 'error', summary: 'Login Failed', detail: err.error?.message || 'Please try again' });

@@ -9,11 +9,20 @@ import java.util.Set;
 
 public interface UserService {
     List<User> getAllUsers();
+
     Optional<User> getUserById(Long id);
+
     Optional<User> getUserByEmail(String email);
+
     User createUser(User user);
+
     User updateUser(Long id, User user);
+
     void deleteUser(Long id);
+
     Set<User> getUsersByRole(Role.RoleName roleName);
+
     boolean existsByEmail(String email);
-} 
+
+    User updateProfilePicture(Long id, String profilePicture);
+}
